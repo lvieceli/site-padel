@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -214,30 +215,48 @@ function buildData(rows) {
   };
 }
 
-async function fetchData() {
+function fetchData() {
   const dot=document.getElementById('syncDot');
   const status=document.getElementById('syncStatus');
   dot.className='sync-dot';
   status.textContent='Sincronizando...';
-  try {
-    const res = await fetch(CSV_URL+'&t='+Date.now());
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    const text=await res.text();
-    const rows=parseCSV(text);
-    const data=buildData(rows);
-    if(data.masc.length===0&&data.fem.length===0) throw new Error('Sem dados');
-    DATA=data;
-    render('');
-    renderNext();
-    document.getElementById('loading-ranking').classList.add('hidden');
-    document.getElementById('panel-masc').classList.remove('hidden');
-    dot.className='sync-dot live';
-    status.textContent='Atualizado · '+new Date().toLocaleTimeString('pt-BR');
-  } catch(err) {
+
+  // Remove script anterior se existir
+  const old = document.getElementById('jsonp-script');
+  if(old) old.remove();
+
+  // Timeout de erro
+  window._jsonpTimeout = setTimeout(function() {
     dot.className='sync-dot error';
     status.textContent='Erro de sincronização';
     document.getElementById('loading-ranking').innerHTML='<p style="color:#ff6b6b;padding:2rem;text-align:center">⚠️ Erro ao carregar. Tente recarregar a página.</p>';
-  }
+  }, 10000);
+
+  // Callback global
+  window._jsonpCallback = function(csvText) {
+    clearTimeout(window._jsonpTimeout);
+    try {
+      const rows = parseCSV(csvText);
+      const data = buildData(rows);
+      if(data.masc.length===0&&data.fem.length===0) throw new Error('Sem dados');
+      DATA = data;
+      render('');
+      renderNext();
+      document.getElementById('loading-ranking').classList.add('hidden');
+      document.getElementById('panel-masc').classList.remove('hidden');
+      dot.className='sync-dot live';
+      status.textContent='Atualizado · '+new Date().toLocaleTimeString('pt-BR');
+    } catch(err) {
+      dot.className='sync-dot error';
+      status.textContent='Erro: '+err.message;
+    }
+  };
+
+  // Injeta script JSONP
+  const script = document.createElement('script');
+  script.id = 'jsonp-script';
+  script.src = CSV_URL + '&callback=_jsonpCallback&t=' + Date.now();
+  document.head.appendChild(script);
 }
 
 function renderR4(groups, cat, filter) {
@@ -310,7 +329,7 @@ function filterSearch(){
 }
 
 fetchData();
-setInterval(fetchData,5*60*1000);
+setInterval(fetchData, 5*60*1000);
 </script>
 </body>
 </html>
