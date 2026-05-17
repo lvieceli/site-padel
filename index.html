@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -151,7 +150,7 @@
 </div>
 
 <script>
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0mcl0wZdUFWT_sc11htCpRF84QN1HiOmH6XN9g-gURA3ORTt9Ud5ByJhOqTjeb1HBXQGMlZ0rNC6G/pub?gid=495596101&single=true&output=csv";
+const CSV_URL = "https://script.google.com/macros/s/AKfycbw2LXyBiY6ppploqNkLiagaTjhB18fT9a1yPfJ9lgQaHJvnMh6GgBX__o6yDLWnfmObQg/exec";
 let DATA = {masc:[], fem:[], next_masc:[], next_fem:[]};
 let cView="ranking", cTab="masc", cNTab="masc";
 
@@ -221,15 +220,7 @@ async function fetchData() {
   dot.className='sync-dot';
   status.textContent='Sincronizando...';
   try {
-    // Tenta direto primeiro, se falhar usa proxy
-    let res;
-    try {
-      res = await fetch(CSV_URL+'&t='+Date.now(), {mode:'cors'});
-      if(!res.ok) throw new Error('direct failed');
-    } catch(e) {
-      const proxy = 'https://corsproxy.io/?'+encodeURIComponent(CSV_URL+'&t='+Date.now());
-      res = await fetch(proxy);
-    }
+    const res = await fetch(CSV_URL+'&t='+Date.now());
     if(!res.ok) throw new Error('HTTP '+res.status);
     const text=await res.text();
     const rows=parseCSV(text);
