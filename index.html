@@ -151,190 +151,264 @@
 </div>
 
 <script>
-const CSV_URL = "https://script.google.com/macros/s/AKfycbzrMqOjlgkqS3_MQs1nPNP6HM7G0tP9CJH-aPB26U8hDGSmV8OpPRevG0vykZ62ylbyCg/exec";
-let DATA = {masc:[], fem:[], next_masc:[], next_fem:[]};
-let cView="ranking", cTab="masc", cNTab="masc";
+var CSV_URL = "https://script.google.com/macros/s/AKfycbzrMqOjlgkqS3_MQs1nPNP6HM7G0tP9CJH-aPB26U8hDGSmV8OpPRevG0vykZ62ylbyCg/exec";
+var DATA = {masc:[], fem:[], next_masc:[], next_fem:[]};
+var cView="ranking", cTab="masc", cNTab="masc";
 
 function parseCSV(text) {
-  return text.split('\n').map(line => {
-    const cells=[]; let inQ=false, cell='';
-    for(const ch of line){
-      if(ch==='"'){inQ=!inQ;}
-      else if(ch===','&&!inQ){cells.push(cell.trim());cell='';}
-      else{cell+=ch;}
+  var rows = text.split('\n');
+  var result = [];
+  for (var i = 0; i < rows.length; i++) {
+    var line = rows[i];
+    var cells = [];
+    var inQ = false;
+    var cell = '';
+    for (var j = 0; j < line.length; j++) {
+      var ch = line[j];
+      if (ch === '"') { inQ = !inQ; }
+      else if (ch === ',' && !inQ) { cells.push(cell.trim()); cell = ''; }
+      else { cell += ch; }
     }
     cells.push(cell.trim());
-    return cells;
-  }).filter(r=>r.some(c=>c!==''));
+    var hasContent = false;
+    for (var k = 0; k < cells.length; k++) { if (cells[k] !== '') hasContent = true; }
+    if (hasContent) result.push(cells);
+  }
+  return result;
+}
+
+function cleanName(n) {
+  if (!n) return '';
+  return n.replace(/\u{1F451}/gu, '').trim();
+}
+
+function countCrowns(n) {
+  if (!n) return 0;
+  var m = n.match(/\u{1F451}/gu);
+  return m ? m.length : 0;
 }
 
 function buildData(rows) {
-  // Colunas: A=Categoria B=Confronto C=Slot D=Nome_R4 E=Rodada4 F=Soma G=Nome_R5 H=Rodada5 I=Soma_R5
-  const buckets = {masc:{}, fem:{}, next_masc:{}, next_fem:{}};
+  var bm = {}, bf = {}, nm = {}, nf = {};
+  for (var i = 1; i < rows.length; i++) {
+    var r = rows[i];
+    if (r.length < 4) continue;
+    var cat  = (r[0] || '').trim().toLowerCase();
+    var cnum = parseInt(r[1]);
+    var slot = parseInt(r[2]);
+    var nR4  = (r[3] || '').trim();
+    var rod4 = parseFloat(r[4]) || 0;
+    var soma = parseFloat(r[5]) || 0;
+    var nR5  = (r[6] || '').trim();
+    var rod5 = parseFloat(r[7]) || 0;
+    if (!cat || isNaN(cnum) || isNaN(slot)) continue;
 
-  for(let i=1; i<rows.length; i++) {
-    const r = rows[i];
-    if(r.length < 4) continue;
-    const cat    = (r[0]||'').trim().toLowerCase();
-    const cnum   = parseInt(r[1]);
-    const slot   = parseInt(r[2]);
-    const nomeR4 = (r[3]||'').trim();
-    const rod4   = parseFloat(r[4])||0;
-    const soma   = parseFloat(r[5])||0;
-    const nomeR5 = (r[6]||'').trim();
-    const rod5   = parseFloat(r[7])||0;
+    var bR4 = (cat === 'fem') ? bf : bm;
+    if (!bR4[cnum]) bR4[cnum] = [];
+    bR4[cnum].push({slot:slot, name:cleanName(nR4), crowns:countCrowns(nR4), jogo4:rod4, soma:soma});
 
-    if(!cat||isNaN(cnum)||isNaN(slot)) continue;
-
-    // Rodada 4
-    const bR4 = cat==='fem' ? buckets.fem : buckets.masc;
-    if(!bR4[cnum]) bR4[cnum]=[];
-    const crownsR4=(nomeR4.match(/👑/g)||[]).length;
-    bR4[cnum].push({slot, name:nomeR4.replace(/👑/g,'').trim(), crowns:crownsR4, jogo4:rod4, soma});
-
-    // Rodada 5
-    const bR5 = cat==='fem' ? buckets.next_fem : buckets.next_masc;
-    if(!bR5[cnum]) bR5[cnum]=[];
-    const crownsR5=(nomeR5.match(/👑/g)||[]).length;
-    bR5[cnum].push({slot, name:nomeR5.replace(/👑/g,'').trim(), crowns:crownsR5, jogo5:rod5});
+    var bR5 = (cat === 'fem') ? nf : nm;
+    if (!bR5[cnum]) bR5[cnum] = [];
+    bR5[cnum].push({slot:slot, name:cleanName(nR5), crowns:countCrowns(nR5), jogo5:rod5});
   }
 
-  const toArr = (bucket, cat) => {
-    const lbl=cat.includes('fem')?'Fem.':'Masc.';
-    return Object.keys(bucket).sort((a,b)=>+a-+b).map(k=>({
-      confronto:`Confronto ${k} ${lbl}`,
-      players: bucket[k].sort((a,b)=>a.slot-b.slot)
-    }));
-  };
+  function toArr(bucket, isFem) {
+    var lbl = isFem ? 'Fem.' : 'Masc.';
+    var keys = Object.keys(bucket).sort(function(a,b){ return +a - +b; });
+    return keys.map(function(k) {
+      return {
+        confronto: 'Confronto ' + k + ' ' + lbl,
+        players: bucket[k].sort(function(a,b){ return a.slot - b.slot; })
+      };
+    });
+  }
 
   return {
-    masc:      toArr(buckets.masc,      'masc'),
-    fem:       toArr(buckets.fem,       'fem'),
-    next_masc: toArr(buckets.next_masc, 'next_masc'),
-    next_fem:  toArr(buckets.next_fem,  'next_fem'),
+    masc:      toArr(bm, false),
+    fem:       toArr(bf, true),
+    next_masc: toArr(nm, false),
+    next_fem:  toArr(nf, true)
   };
 }
 
-function fetchData() {
-  const dot=document.getElementById('syncDot');
-  const status=document.getElementById('syncStatus');
-  dot.className='sync-dot';
-  status.textContent='Sincronizando...';
+function esc(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
-  // Remove script anterior se existir
-  const old = document.getElementById('jsonp-script');
-  if(old) old.remove();
-
-  // Timeout de erro
-  window._jsonpTimeout = setTimeout(function() {
-    dot.className='sync-dot error';
-    status.textContent='Erro de sincronização';
-    document.getElementById('loading-ranking').innerHTML='<p style="color:#ff6b6b;padding:2rem;text-align:center">⚠️ Erro ao carregar. Tente recarregar a página.</p>';
-  }, 10000);
-
-  // Callback global
-  window._jsonpCallback = function(csvText) {
-    clearTimeout(window._jsonpTimeout);
-    try {
-      const rows = parseCSV(csvText);
-      const data = buildData(rows);
-      if(data.masc.length===0&&data.fem.length===0) throw new Error('Sem dados');
-      DATA = data;
-      render('');
-      renderNext();
-      document.getElementById('loading-ranking').classList.add('hidden');
-      document.getElementById('panel-masc').classList.remove('hidden');
-      dot.className='sync-dot live';
-      status.textContent='Atualizado · '+new Date().toLocaleTimeString('pt-BR');
-    } catch(err) {
-      dot.className='sync-dot error';
-      status.textContent='Erro: '+err.message;
-    }
-  };
-
-  // Injeta script JSONP
-  const script = document.createElement('script');
-  script.id = 'jsonp-script';
-  script.src = CSV_URL + '&callback=_jsonpCallback&t=' + Date.now();
-  document.head.appendChild(script);
+function crown() {
+  return '<span style="font-size:.75rem">&#128081;</span>';
 }
 
 function renderR4(groups, cat, filter) {
-  const panel=document.getElementById('panel-'+cat);
-  const isFem=cat==='fem'; const q=(filter||'').toLowerCase(); let html='';
-  for(const g of groups) {
-    const ok=q?g.players.some(p=>p.name.toLowerCase().includes(q)):true;
-    if(!ok) continue;
-    html+=`<div class="confronto-block"><div class="confronto-header"><span class="confronto-title ${cat}">${g.confronto}</span></div><div class="col-headers"><div class="col-h"></div><div class="col-h">Jogador</div><div class="col-h right">Rodada 4</div><div class="col-h right">Soma</div></div>`;
-    for(const p of g.players) {
-      const m=q&&p.name.toLowerCase().includes(q);
-      const emp=!p.name||p.name.toUpperCase()==='ABERTO';
-      const cr='<span style="font-size:.75rem">&#128081;</span>'.repeat(p.crowns);
-      const safeName=emp?'Vaga aberta':(p.name||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      const j4=p.jogo4>0?'<div class="jogo-cell has-value">'+p.jogo4+'</div>':'<div class="jogo-cell">-</div>';
-      const sm=p.soma>0?'<div class="soma-cell '+(isFem?'fem':'')+'">'+p.soma+'</div>':'<div class="soma-cell empty">-</div>';
-      const rowCls='player-row'+(m?' hl'+(isFem?' fem-hl':''):'');
-      const nameCls='player-name '+(emp?'empty':'');
-      html+='<div class="'+rowCls+'"><div class="slot-num">'+p.slot+'</div><div class="'+nameCls+'">'+safeName+cr+'</div>'+j4+sm+'</div>';
+  var panel = document.getElementById('panel-' + cat);
+  var isFem = (cat === 'fem');
+  var q = (filter || '').toLowerCase();
+  var html = '';
+
+  for (var i = 0; i < groups.length; i++) {
+    var g = groups[i];
+    var ok = false;
+    if (q) {
+      for (var j = 0; j < g.players.length; j++) {
+        if (g.players[j].name.toLowerCase().indexOf(q) >= 0) { ok = true; break; }
+      }
+    } else { ok = true; }
+    if (!ok) continue;
+
+    html += '<div class="confronto-block">';
+    html += '<div class="confronto-header"><span class="confronto-title ' + cat + '">' + esc(g.confronto) + '</span></div>';
+    html += '<div class="col-headers"><div class="col-h"></div><div class="col-h">Jogador</div><div class="col-h right">Rodada 4</div><div class="col-h right">Soma</div></div>';
+
+    for (var j = 0; j < g.players.length; j++) {
+      var p = g.players[j];
+      var match = q && (p.name.toLowerCase().indexOf(q) >= 0);
+      var empty = !p.name || p.name.toUpperCase() === 'ABERTO';
+      var crowns = '';
+      for (var c = 0; c < p.crowns; c++) crowns += crown();
+      var displayName = empty ? 'Vaga aberta' : esc(p.name) + crowns;
+      var j4 = p.jogo4 > 0 ? '<div class="jogo-cell has-value">' + p.jogo4 + '</div>' : '<div class="jogo-cell">-</div>';
+      var sm = p.soma > 0 ? '<div class="soma-cell' + (isFem ? ' fem' : '') + '">' + p.soma + '</div>' : '<div class="soma-cell empty">-</div>';
+      var rowCls = 'player-row' + (match ? ' hl' + (isFem ? ' fem-hl' : '') : '');
+      var nameCls = 'player-name' + (empty ? ' empty' : '');
+      html += '<div class="' + rowCls + '">';
+      html += '<div class="slot-num">' + p.slot + '</div>';
+      html += '<div class="' + nameCls + '">' + displayName + '</div>';
+      html += j4 + sm;
+      html += '</div>';
     }
-    html+='</div>';
+    html += '</div>';
   }
-  panel.innerHTML=html||'<p style="color:var(--muted);text-align:center;padding:2rem">Nenhum resultado.</p>';
+
+  panel.innerHTML = html || '<p style="color:var(--muted);text-align:center;padding:2rem">Nenhum resultado.</p>';
 }
 
 function renderR5(groups, panelId) {
-  const panel=document.getElementById(panelId);
-  const isFem=panelId.includes('fem'); let html='';
-  const titleCls=isFem?'next-fem':'next-masc';
+  var panel = document.getElementById(panelId);
+  var isFem = panelId.indexOf('fem') >= 0;
+  var titleCls = isFem ? 'next-fem' : 'next-masc';
+  var html = '';
 
-  for(const g of groups) {
-    html+=`<div class="confronto-block next-block"><div class="confronto-header"><span class="confronto-title ${titleCls}">${g.confronto}</span></div><div class="col-headers"><div class="col-h"></div><div class="col-h">Jogador</div><div class="col-h right">Rodada 5</div><div class="col-h right">Soma</div></div>`;
-    for(const p of g.players) {
-      const emp=!p.name;
-      const cr='<span style="font-size:.75rem">&#128081;</span>'.repeat(p.crowns||0);
-      const safeName=emp?'A definir...':(p.name||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      const j5=p.jogo5>0?'<div class="jogo-cell has-value">'+p.jogo5+'</div>':'<div class="jogo-cell">-</div>';
-      const nameCls2='player-name '+(emp?'pending':'');
-      html+='<div class="player-row"><div class="slot-num next-slot">'+p.slot+'</div><div class="'+nameCls2+'">'+safeName+cr+'</div>'+j5+'<div class="soma-cell empty">-</div></div>';
+  for (var i = 0; i < groups.length; i++) {
+    var g = groups[i];
+    html += '<div class="confronto-block next-block">';
+    html += '<div class="confronto-header"><span class="confronto-title ' + titleCls + '">' + esc(g.confronto) + '</span></div>';
+    html += '<div class="col-headers"><div class="col-h"></div><div class="col-h">Jogador</div><div class="col-h right">Rodada 5</div><div class="col-h right">Soma</div></div>';
+
+    for (var j = 0; j < g.players.length; j++) {
+      var p = g.players[j];
+      var empty = !p.name;
+      var crowns = '';
+      for (var c = 0; c < (p.crowns || 0); c++) crowns += crown();
+      var displayName = empty ? 'A definir...' : esc(p.name) + crowns;
+      var j5 = p.jogo5 > 0 ? '<div class="jogo-cell has-value">' + p.jogo5 + '</div>' : '<div class="jogo-cell">-</div>';
+      var nameCls = 'player-name' + (empty ? ' pending' : '');
+      html += '<div class="player-row">';
+      html += '<div class="slot-num next-slot">' + p.slot + '</div>';
+      html += '<div class="' + nameCls + '">' + displayName + '</div>';
+      html += j5 + '<div class="soma-cell empty">-</div>';
+      html += '</div>';
     }
-    html+='</div>';
+    html += '</div>';
   }
-  panel.innerHTML=html||'<p style="color:var(--muted);text-align:center;padding:2rem">Formação ainda não definida.</p>';
+
+  panel.innerHTML = html || '<p style="color:var(--muted);text-align:center;padding:2rem">Formacao ainda nao definida.</p>';
 }
 
-function render(f){renderR4(DATA.masc,'masc',f);renderR4(DATA.fem,'fem',f);}
-function renderNext(){renderR5(DATA.next_masc,'panel-next-masc');renderR5(DATA.next_fem,'panel-next-fem');}
+function render(f) { renderR4(DATA.masc, 'masc', f); renderR4(DATA.fem, 'fem', f); }
+function renderNext() { renderR5(DATA.next_masc, 'panel-next-masc'); renderR5(DATA.next_fem, 'panel-next-fem'); }
 
-function switchView(v){
-  cView=v;
-  document.getElementById('view-ranking').classList.toggle('hidden',v!=='ranking');
-  document.getElementById('view-proxima').classList.toggle('hidden',v!=='proxima');
-  document.getElementById('btn-ranking').className='nav-btn'+(v==='ranking'?' active-ranking':'');
-  document.getElementById('btn-proxima').className='nav-btn'+(v==='proxima'?' active-proxima':'');
+function switchView(v) {
+  cView = v;
+  document.getElementById('view-ranking').className = v !== 'ranking' ? 'hidden' : '';
+  document.getElementById('view-proxima').className = v !== 'proxima' ? 'hidden' : '';
+  document.getElementById('btn-ranking').className = 'nav-btn' + (v === 'ranking' ? ' active-ranking' : '');
+  document.getElementById('btn-proxima').className = 'nav-btn' + (v === 'proxima' ? ' active-proxima' : '');
 }
-function switchTab(t){
-  cTab=t;
-  document.getElementById('panel-masc').classList.toggle('hidden',t!=='masc');
-  document.getElementById('panel-fem').classList.toggle('hidden',t!=='fem');
-  document.getElementById('tab-masc').className='tab masc'+(t==='masc'?' active':'');
-  document.getElementById('tab-fem').className='tab fem'+(t==='fem'?' active':'');
+function switchTab(t) {
+  cTab = t;
+  document.getElementById('panel-masc').className = t !== 'masc' ? 'hidden' : '';
+  document.getElementById('panel-fem').className = t !== 'fem' ? 'hidden' : '';
+  document.getElementById('tab-masc').className = 'tab masc' + (t === 'masc' ? ' active' : '');
+  document.getElementById('tab-fem').className = 'tab fem' + (t === 'fem' ? ' active' : '');
 }
-function switchNextTab(t){
-  cNTab=t;
-  document.getElementById('panel-next-masc').classList.toggle('hidden',t!=='masc');
-  document.getElementById('panel-next-fem').classList.toggle('hidden',t!=='fem');
-  document.getElementById('tab-next-masc').className='tab next'+(t==='masc'?' active':'');
-  document.getElementById('tab-next-fem').className='tab next'+(t==='fem'?' active':'');
+function switchNextTab(t) {
+  cNTab = t;
+  document.getElementById('panel-next-masc').className = t !== 'masc' ? 'hidden' : '';
+  document.getElementById('panel-next-fem').className = t !== 'fem' ? 'hidden' : '';
+  document.getElementById('tab-next-masc').className = 'tab next' + (t === 'masc' ? ' active' : '');
+  document.getElementById('tab-next-fem').className = 'tab next' + (t === 'fem' ? ' active' : '');
 }
-function filterSearch(){
-  const q=document.getElementById('searchInput').value;
+function filterSearch() {
+  var q = document.getElementById('searchInput').value;
   render(q);
-  if(q){document.getElementById('panel-masc').classList.remove('hidden');document.getElementById('panel-fem').classList.remove('hidden');}
-  else switchTab(cTab);
+  if (q) {
+    document.getElementById('panel-masc').className = '';
+    document.getElementById('panel-fem').className = '';
+  } else { switchTab(cTab); }
+}
+
+function processCSV(csvText) {
+  try {
+    var rows = parseCSV(csvText);
+    var data = buildData(rows);
+    if (data.masc.length === 0 && data.fem.length === 0) throw new Error('Sem dados');
+    DATA = data;
+    render('');
+    renderNext();
+    document.getElementById('loading-ranking').className = 'loading hidden';
+    document.getElementById('panel-masc').className = '';
+    document.getElementById('syncDot').className = 'sync-dot live';
+    document.getElementById('syncStatus').textContent = 'Atualizado';
+  } catch(err) {
+    document.getElementById('syncDot').className = 'sync-dot error';
+    document.getElementById('syncStatus').textContent = 'Erro: ' + err.message;
+    document.getElementById('loading-ranking').innerHTML = '<p style="color:#ff6b6b;padding:2rem;text-align:center">Erro ao carregar dados.</p>';
+  }
+}
+
+function fetchData() {
+  var dot = document.getElementById('syncDot');
+  var status = document.getElementById('syncStatus');
+  dot.className = 'sync-dot';
+  status.textContent = 'Sincronizando...';
+
+  // Tenta fetch com CORS primeiro
+  fetch(CSV_URL + '&t=' + Date.now())
+    .then(function(r) { return r.text(); })
+    .then(function(text) {
+      // Se veio como JSONP (começa com callback), extrai o CSV
+      if (text.indexOf('(') > -1 && text.indexOf('"') > -1) {
+        var start = text.indexOf('"') + 1;
+        var end = text.lastIndexOf('"');
+        text = text.substring(start, end).replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+      }
+      processCSV(text);
+    })
+    .catch(function() {
+      // Fallback: JSONP via script tag
+      var old = document.getElementById('jsonp-script');
+      if (old) old.parentNode.removeChild(old);
+
+      window._jsonpTimeout = setTimeout(function() {
+        dot.className = 'sync-dot error';
+        status.textContent = 'Erro de sincronizacao';
+        document.getElementById('loading-ranking').innerHTML = '<p style="color:#ff6b6b;padding:2rem;text-align:center">Erro ao carregar. Tente recarregar.</p>';
+      }, 10000);
+
+      window._jsonpCallback = function(csvText) {
+        clearTimeout(window._jsonpTimeout);
+        processCSV(csvText);
+      };
+
+      var script = document.createElement('script');
+      script.id = 'jsonp-script';
+      script.src = CSV_URL + '&callback=_jsonpCallback&t=' + Date.now();
+      document.head.appendChild(script);
+    });
 }
 
 fetchData();
-setInterval(fetchData, 5*60*1000);
+setInterval(fetchData, 5 * 60 * 1000);
 </script>
 </body>
 </html>
