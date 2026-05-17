@@ -270,9 +270,12 @@ function renderR4(groups, cat, filter) {
       const m=q&&p.name.toLowerCase().includes(q);
       const emp=!p.name||p.name.toUpperCase()==='ABERTO';
       const cr='<span style="font-size:.75rem">&#128081;</span>'.repeat(p.crowns);
-      const j4=p.jogo4>0?`<div class="jogo-cell has-value">${p.jogo4}</div>`:'<div class="jogo-cell">—</div>';
-      const sm=p.soma>0?`<div class="soma-cell ${isFem?'fem':''}">${p.soma}</div>`:'<div class="soma-cell empty">—</div>';
-      html+=`<div class="player-row${m?' hl'+(isFem?' fem-hl':''):''"}"><div class="slot-num">${p.slot}</div><div class="player-name ${emp?'empty':''}">${emp?'Vaga aberta':p.name}${cr}</div>${j4}${sm}</div>`;
+      const safeName=emp?'Vaga aberta':(p.name||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const j4=p.jogo4>0?'<div class="jogo-cell has-value">'+p.jogo4+'</div>':'<div class="jogo-cell">-</div>';
+      const sm=p.soma>0?'<div class="soma-cell '+(isFem?'fem':'')+'">'+p.soma+'</div>':'<div class="soma-cell empty">-</div>';
+      const rowCls='player-row'+(m?' hl'+(isFem?' fem-hl':''):'');
+      const nameCls='player-name '+(emp?'empty':'');
+      html+='<div class="'+rowCls+'"><div class="slot-num">'+p.slot+'</div><div class="'+nameCls+'">'+safeName+cr+'</div>'+j4+sm+'</div>';
     }
     html+='</div>';
   }
@@ -289,8 +292,10 @@ function renderR5(groups, panelId) {
     for(const p of g.players) {
       const emp=!p.name;
       const cr='<span style="font-size:.75rem">&#128081;</span>'.repeat(p.crowns||0);
-      const j5=p.jogo5>0?`<div class="jogo-cell has-value">${p.jogo5}</div>`:'<div class="jogo-cell">—</div>';
-      html+=`<div class="player-row"><div class="slot-num next-slot">${p.slot}</div><div class="player-name ${emp?'pending':''}">${emp?'A definir...':p.name}${cr}</div>${j5}<div class="soma-cell empty">—</div></div>`;
+      const safeName=emp?'A definir...':(p.name||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const j5=p.jogo5>0?'<div class="jogo-cell has-value">'+p.jogo5+'</div>':'<div class="jogo-cell">-</div>';
+      const nameCls2='player-name '+(emp?'pending':'');
+      html+='<div class="player-row"><div class="slot-num next-slot">'+p.slot+'</div><div class="'+nameCls2+'">'+safeName+cr+'</div>'+j5+'<div class="soma-cell empty">-</div></div>';
     }
     html+='</div>';
   }
