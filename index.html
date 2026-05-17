@@ -151,7 +151,7 @@
 </div>
 
 <script>
-var CSV_URL = "https://script.google.com/macros/s/AKfycbzrMqOjlgkqS3_MQs1nPNP6HM7G0tP9CJH-aPB26U8hDGSmV8OpPRevG0vykZ62ylbyCg/exec";
+var CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0mcl0wZdUFWT_sc11htCpRF84QN1HiOmH6XN9g-gURA3ORTt9Ud5ByJhOqTjeb1HBXQGMlZ0rNC6G/pub?gid=495596101&single=true&output=csv";
 var DATA = {masc:[], fem:[], next_masc:[], next_fem:[]};
 var cView="ranking", cTab="masc", cNTab="masc";
 
@@ -347,63 +347,33 @@ function filterSearch() {
   } else { switchTab(cTab); }
 }
 
-function processCSV(csvText) {
-  try {
-    var rows = parseCSV(csvText);
-    var data = buildData(rows);
-    if (data.masc.length === 0 && data.fem.length === 0) throw new Error('Sem dados');
-    DATA = data;
-    render('');
-    renderNext();
-    document.getElementById('loading-ranking').className = 'loading hidden';
-    document.getElementById('panel-masc').className = '';
-    document.getElementById('syncDot').className = 'sync-dot live';
-    document.getElementById('syncStatus').textContent = 'Atualizado';
-  } catch(err) {
-    document.getElementById('syncDot').className = 'sync-dot error';
-    document.getElementById('syncStatus').textContent = 'Erro: ' + err.message;
-    document.getElementById('loading-ranking').innerHTML = '<p style="color:#ff6b6b;padding:2rem;text-align:center">Erro ao carregar dados.</p>';
-  }
-}
-
 function fetchData() {
   var dot = document.getElementById('syncDot');
   var status = document.getElementById('syncStatus');
   dot.className = 'sync-dot';
   status.textContent = 'Sincronizando...';
 
-  // Tenta fetch com CORS primeiro
-  fetch(CSV_URL + '&t=' + Date.now())
-    .then(function(r) { return r.text(); })
-    .then(function(text) {
-      // Se veio como JSONP (começa com callback), extrai o CSV
-      if (text.indexOf('(') > -1 && text.indexOf('"') > -1) {
-        var start = text.indexOf('"') + 1;
-        var end = text.lastIndexOf('"');
-        text = text.substring(start, end).replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\\\/g, '\\');
-      }
-      processCSV(text);
+  fetch(CSV_URL)
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.text();
     })
-    .catch(function() {
-      // Fallback: JSONP via script tag
-      var old = document.getElementById('jsonp-script');
-      if (old) old.parentNode.removeChild(old);
-
-      window._jsonpTimeout = setTimeout(function() {
-        dot.className = 'sync-dot error';
-        status.textContent = 'Erro de sincronizacao';
-        document.getElementById('loading-ranking').innerHTML = '<p style="color:#ff6b6b;padding:2rem;text-align:center">Erro ao carregar. Tente recarregar.</p>';
-      }, 10000);
-
-      window._jsonpCallback = function(csvText) {
-        clearTimeout(window._jsonpTimeout);
-        processCSV(csvText);
-      };
-
-      var script = document.createElement('script');
-      script.id = 'jsonp-script';
-      script.src = CSV_URL + '&callback=_jsonpCallback&t=' + Date.now();
-      document.head.appendChild(script);
+    .then(function(text) {
+      var rows = parseCSV(text);
+      var data = buildData(rows);
+      if (data.masc.length === 0 && data.fem.length === 0) throw new Error('Sem dados');
+      DATA = data;
+      render('');
+      renderNext();
+      document.getElementById('loading-ranking').className = 'loading hidden';
+      document.getElementById('panel-masc').className = '';
+      dot.className = 'sync-dot live';
+      status.textContent = 'Atualizado';
+    })
+    .catch(function(err) {
+      dot.className = 'sync-dot error';
+      status.textContent = 'Erro: ' + err.message;
+      document.getElementById('loading-ranking').innerHTML = '<p style="color:#ff6b6b;padding:2rem;text-align:center">Erro ao carregar. Tente recarregar a pagina.</p>';
     });
 }
 
