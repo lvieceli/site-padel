@@ -59,6 +59,9 @@
   .player-row:hover{background:rgba(255,255,255,0.015)}
   .slot-num{width:24px;height:24px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;color:#444}
   .slot-num.next-slot{border-color:rgba(240,192,64,0.3);color:rgba(240,192,64,0.7)}
+  .slot-num.slot-1st{background:#1a4a1a;border-color:#4caf50;color:#4caf50;font-weight:800}
+  .slot-num.slot-2nd{background:#4a3d00;border-color:#ffc107;color:#ffc107;font-weight:800}
+  .slot-num.slot-4th{background:#4a1010;border-color:#f44336;color:#f44336;font-weight:800}
   .player-name{font-size:.86rem;font-weight:500;display:flex;align-items:center;gap:.25rem}
   .player-name.empty{color:var(--muted);font-style:italic;font-weight:300;font-size:.78rem}
   .player-name.pending{color:#3a3a2a;font-style:italic;font-weight:300;font-size:.78rem}
@@ -218,6 +221,7 @@ function buildData(rows) {
     return keys.map(function(k) {
       return {
         confronto: 'Confronto ' + k + ' ' + lbl,
+        confrontoNum: +k,
         players: bucket[k].sort(function(a,b){ return a.slot - b.slot; })
       };
     });
@@ -259,6 +263,16 @@ function renderR4(groups, cat, filter) {
     html += '<div class="confronto-header"><span class="confronto-title ' + cat + '">' + esc(g.confronto) + '</span></div>';
     html += '<div class="col-headers"><div class="col-h"></div><div class="col-h">Jogador</div><div class="col-h right">Rodada 4</div><div class="col-h right">Soma</div></div>';
 
+    // Rank players by jogo4 desc, soma desc on tie
+    var ranked = g.players.slice().sort(function(a, b) {
+      if (b.jogo4 !== a.jogo4) return b.jogo4 - a.jogo4;
+      return b.soma - a.soma;
+    });
+    var rankMap = {};
+    for (var r = 0; r < ranked.length; r++) {
+      rankMap[ranked[r].slot] = r; // 0=1st, 1=2nd, 2=3rd, 3=4th
+    }
+
     for (var j = 0; j < g.players.length; j++) {
       var p = g.players[j];
       var match = q && (p.name.toLowerCase().indexOf(q) >= 0);
@@ -270,8 +284,18 @@ function renderR4(groups, cat, filter) {
       var sm = p.soma > 0 ? '<div class="soma-cell' + (isFem ? ' fem' : '') + '">' + p.soma + '</div>' : '<div class="soma-cell empty">-</div>';
       var rowCls = 'player-row' + (match ? ' hl' + (isFem ? ' fem-hl' : '') : '');
       var nameCls = 'player-name' + (empty ? ' empty' : '');
+
+      // Slot color based on ranking within confronto
+      var slotCls = 'slot-num';
+      if (p.jogo4 > 0) {
+        var rank = rankMap[p.slot];
+        if (rank === 0) slotCls = 'slot-num slot-1st';
+        else if (rank === 1 || rank === 2) slotCls = 'slot-num slot-2nd';
+        else slotCls = 'slot-num slot-4th';
+      }
+
       html += '<div class="' + rowCls + '">';
-      html += '<div class="slot-num">' + p.slot + '</div>';
+      html += '<div class="' + slotCls + '">' + ((g.confrontoNum - 1) * 4 + p.slot) + '</div>';
       html += '<div class="' + nameCls + '">' + displayName + '</div>';
       html += j4 + sm;
       html += '</div>';
@@ -303,7 +327,7 @@ function renderR5(groups, panelId) {
       var j5 = p.jogo5 > 0 ? '<div class="jogo-cell has-value">' + p.jogo5 + '</div>' : '<div class="jogo-cell">-</div>';
       var nameCls = 'player-name' + (empty ? ' pending' : '');
       html += '<div class="player-row">';
-      html += '<div class="slot-num next-slot">' + p.slot + '</div>';
+      html += '<div class="slot-num next-slot">' + ((g.confrontoNum - 1) * 4 + p.slot) + '</div>';
       html += '<div class="' + nameCls + '">' + displayName + '</div>';
       html += j5 + '<div class="soma-cell empty">-</div>';
       html += '</div>';
