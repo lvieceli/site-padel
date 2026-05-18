@@ -212,7 +212,7 @@ function buildData(rows) {
 
     var bR5 = (cat === 'fem') ? nf : nm;
     if (!bR5[cnum]) bR5[cnum] = [];
-    bR5[cnum].push({slot:slot, name:cleanName(nR5), crowns:countCrowns(nR5), jogo5:rod5});
+    bR5[cnum].push({slot:slot, name:cleanName(nR5), crowns:countCrowns(nR5), jogo5:rod5, soma:soma});
   }
 
   function toArr(bucket, isFem) {
@@ -334,7 +334,7 @@ function renderR5(groups, panelId) {
     var g = groups[i];
     html += '<div class="confronto-block next-block">';
     html += '<div class="confronto-header"><span class="confronto-title ' + titleCls + '">' + esc(g.confronto) + '</span></div>';
-    html += '<div class="col-headers"><div class="col-h"></div><div class="col-h">Jogador</div><div class="col-h right">Rodada 5</div><div class="col-h right">Soma</div></div>';
+    html += '<div class="col-headers"><div class="col-h"></div><div class="col-h">Jogador</div><div class="col-h right">' + (window._cfgProxima || 'Proxima') + '</div><div class="col-h right">Soma</div></div>';
 
     for (var j = 0; j < g.players.length; j++) {
       var p = g.players[j];
@@ -514,6 +514,7 @@ function filterSearch() {
 
 function applyConfig(cfg) {
   if (!cfg) return;
+  window._cfgProxima = cfg.proxima || 'Proxima';
   var bannerEl = document.querySelector('.rodada-text strong');
   if (bannerEl && cfg.rodada && cfg.prazo) {
     bannerEl.textContent = cfg.rodada + ' - Prazo ate ' + cfg.prazo;
