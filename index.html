@@ -285,13 +285,31 @@ function renderR4(groups, cat, filter) {
       var rowCls = 'player-row' + (match ? ' hl' + (isFem ? ' fem-hl' : '') : '');
       var nameCls = 'player-name' + (empty ? ' empty' : '');
 
-      // Slot color based on ranking within confronto
+      // Slot color based on movement (up/stay/down)
       var slotCls = 'slot-num';
       if (p.jogo4 > 0) {
         var rank = rankMap[p.slot];
-        if (rank === 0) slotCls = 'slot-num slot-1st';
-        else if (rank === 1 || rank === 2) slotCls = 'slot-num slot-2nd';
-        else slotCls = 'slot-num slot-4th';
+        var nG = groups.length;
+        var movement;
+        if (i === 0) {
+          // confronto 1: rank 0,1 stay at top (green), rank 2,3 go down (red)
+          movement = (rank <= 1) ? 'up' : 'down';
+        } else if (i === 1) {
+          // confronto 2: rank 0,1 go up (green), rank 2 stays (yellow), rank 3 down (red)
+          movement = (rank <= 1) ? 'up' : (rank === 2 ? 'stay' : 'down');
+        } else if (i === nG - 1) {
+          // last: rank 0,1 go up (green), rank 2,3 stay at bottom (red)
+          movement = (rank <= 1) ? 'up' : 'down';
+        } else if (i === nG - 2) {
+          // penultimate: rank 0 up (green), rank 1 stays (yellow), rank 2,3 down (red)
+          movement = (rank === 0) ? 'up' : (rank === 1 ? 'stay' : 'down');
+        } else {
+          // middle: rank 0 up (green), rank 1,2 stay (yellow), rank 3 down (red)
+          movement = (rank === 0) ? 'up' : (rank <= 2 ? 'stay' : 'down');
+        }
+        if (movement === 'up')   slotCls = 'slot-num slot-1st';
+        else if (movement === 'stay') slotCls = 'slot-num slot-2nd';
+        else                     slotCls = 'slot-num slot-4th';
       }
 
       html += '<div class="' + rowCls + '">';
