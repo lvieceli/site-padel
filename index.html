@@ -60,6 +60,12 @@
   .slot-num{width:24px;height:24px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;color:#444}
   .slot-num.next-slot{border-color:rgba(240,192,64,0.3);color:rgba(240,192,64,0.7)}
   .slot-num.slot-1st{background:#1a4a1a;border-color:#4caf50;color:#4caf50;font-weight:800}
+  .agenda-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:8px;vertical-align:middle;flex-shrink:0}
+  .agenda-dot.cinza{background:#555;border:1px solid #666}
+  .agenda-dot.amarelo{background:#ffc107;border:1px solid #ffdb6d;box-shadow:0 0 4px rgba(255,193,7,0.5)}
+  .agenda-dot.verde{background:#4caf50;border:1px solid #81c784;box-shadow:0 0 4px rgba(76,175,80,0.5)}
+  .confronto-header{display:flex;align-items:center;justify-content:space-between}
+  .agenda-info{font-size:.72rem;color:var(--muted);margin-left:auto;padding-right:.5rem}
   .slot-num.slot-2nd{background:#4a3d00;border-color:#ffc107;color:#ffc107;font-weight:800}
   .slot-num.slot-4th{background:#4a1010;border-color:#f44336;color:#f44336;font-weight:800}
   .player-name{font-size:.86rem;font-weight:500;display:flex;align-items:center;gap:.25rem}
@@ -154,8 +160,9 @@
 </div>
 
 <script>
-var APPS_URL = "https://script.google.com/macros/s/AKfycbzrMqOjlgkqS3_MQs1nPNP6HM7G0tP9CJH-aPB26U8hDGSmV8OpPRevG0vykZ62ylbyCg/exec";
+var APPS_URL = "https://script.google.com/macros/s/AKfycbyhK_BNIZ3iotoqvlcG0uhQ96YngwZeKMhDpk2jBSBFWKpFEG0Bgkvw3B9zrbTDxs28/exec";
 var DATA = {masc:[], fem:[], next_masc:[], next_fem:[]};
+var AGENDA = {};
 var cView="ranking", cTab="masc", cNTab="masc";
 
 function parseCSV(text) {
@@ -260,7 +267,24 @@ function renderR4(groups, cat, filter) {
     if (!ok) continue;
 
     html += '<div class="confronto-block">';
-    html += '<div class="confronto-header"><span class="confronto-title ' + cat + '">' + esc(g.confronto) + '</span></div>';
+    // Get agenda info for this confronto
+    var agKey = (isFem ? 'fem' : 'masc') + '_' + g.confrontoNum;
+    var ag = AGENDA[agKey] || null;
+    var hasResult = g.players.some(function(p){ return p.jogo4 > 0; });
+    var dotClass, agInfo = '';
+    if (hasResult) {
+      dotClass = 'verde';
+    } else if (ag && (ag.dia || ag.hora || ag.quadra)) {
+      dotClass = 'amarelo';
+      agInfo = (ag.dia || '') + (ag.hora ? ' · ' + ag.hora : '') + (ag.quadra ? ' · Quadra ' + ag.quadra : '');
+    } else {
+      dotClass = 'cinza';
+    }
+    html += '<div class="confronto-header">';
+    html += '<span class="confronto-title ' + cat + '">' + esc(g.confronto) + '</span>';
+    if (agInfo) html += '<span class="agenda-info">' + agInfo + '</span>';
+    html += '<span class="agenda-dot ' + dotClass + '"></span>';
+    html += '</div>';
     html += '<div class="col-headers"><div class="col-h"></div><div class="col-h">Jogador</div><div class="col-h right">Rodada 4</div><div class="col-h right">Soma</div></div>';
 
     // Rank players by jogo4 desc, soma desc on tie
@@ -561,6 +585,7 @@ function processData(payload) {
     var data = buildData(rows);
     if (data.masc.length === 0 && data.fem.length === 0) throw new Error('Sem dados');
     DATA = data;
+    AGENDA = (typeof payload === 'object' && payload.agenda) ? payload.agenda : {};
     applyConfig(cfg);
     render('');
     renderNext();
