@@ -355,10 +355,10 @@ function computeNextRound(groups) {
   // Get ranked players per group (null if no results)
   var ranked = groups.map(function(g) { return rankPlayers(g.players); });
 
-  // Start: each confronto keeps its own players in same slots
+  // Start: all slots empty (A definir)
   var result = groups.map(function(g) {
     return g.players.map(function(p) {
-      return {slot: p.slot, name: p.name, crowns: p.crowns, jogo5: 0};
+      return {slot: p.slot, name: '', crowns: 0, jogo5: 0};
     });
   });
 
