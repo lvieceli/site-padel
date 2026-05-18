@@ -371,12 +371,38 @@ function filterSearch() {
   } else { switchTab(cTab); }
 }
 
-function processData(csvText) {
+function applyConfig(cfg) {
+  if (!cfg) return;
+  var bannerEl = document.querySelector('.rodada-text strong');
+  if (bannerEl && cfg.rodada && cfg.prazo) {
+    bannerEl.textContent = cfg.rodada + ' - Prazo ate ' + cfg.prazo;
+  }
+  var btnRanking = document.getElementById('btn-ranking');
+  if (btnRanking && cfg.rodada) {
+    btnRanking.textContent = 'Classificacao - ' + cfg.rodada;
+  }
+  var proxBanner = document.querySelector('.proxima-banner strong');
+  if (proxBanner && cfg.proxima) {
+    proxBanner.textContent = cfg.proxima + ' - 2026 - Formacao';
+  }
+}
+
+function processData(payload) {
   try {
+    var csvText, cfg;
+    try {
+      var obj = (typeof payload === 'object') ? payload : JSON.parse(payload);
+      csvText = obj.csv;
+      cfg = obj.cfg;
+    } catch(e) {
+      csvText = String(payload);
+      cfg = null;
+    }
     var rows = parseCSV(csvText);
     var data = buildData(rows);
     if (data.masc.length === 0 && data.fem.length === 0) throw new Error('Sem dados');
     DATA = data;
+    applyConfig(cfg);
     render('');
     renderNext();
     document.getElementById('loading-ranking').className = 'loading hidden';
@@ -405,9 +431,9 @@ function fetchData() {
     document.getElementById('loading-ranking').innerHTML = '<p style="color:#ff6b6b;padding:2rem;text-align:center">Erro ao carregar. Tente recarregar.</p>';
   }, 15000);
 
-  window._cb = function(csvText) {
+  window._cb = function(payload) {
     clearTimeout(window._jsonpTimeout);
-    processData(csvText);
+    processData(payload);
   };
 
   var script = document.createElement('script');
