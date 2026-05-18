@@ -338,8 +338,121 @@ function renderR5(groups, panelId) {
   panel.innerHTML = html || '<p style="color:var(--muted);text-align:center;padding:2rem">Formacao ainda nao definida.</p>';
 }
 
+
+function computeNextRound(groups) {
+  // groups: array of {confronto, confrontoNum, players:[{slot,name,crowns,jogo4,soma}]}
+  // Returns new groups with next round slots computed
+  var n = groups.length;
+  if (n === 0) return groups;
+
+  // For each group, rank players by jogo4 desc, soma desc on tie
+  function rankPlayers(players) {
+    return players.slice().sort(function(a, b) {
+      if (b.jogo4 !== a.jogo4) return b.jogo4 - a.jogo4;
+      return b.soma - a.soma;
+    });
+  }
+
+  // Get ranked players per group
+  var ranked = groups.map(function(g) { return rankPlayers(g.players); });
+
+  // Build next round result: array of 4 slots per confronto
+  // result[i] = [slot1, slot2, slot3, slot4] (player objects or null)
+  var result = [];
+  for (var i = 0; i < n; i++) {
+    result.push([null, null, null, null]);
+  }
+
+  for (var i = 0; i < n; i++) {
+    var r = ranked[i]; // [1st, 2nd, 3rd, 4th]
+    var isFirst  = (i === 0);
+    var isSecond = (i === 1);
+    var isLast   = (i === n - 1);
+    var isPenult = (i === n - 2);
+
+    if (isFirst) {
+      // 1st and 2nd stay in confronto 1, slots 1 and 2
+      result[0][0] = r[0]; // slot 1
+      result[0][1] = r[1]; // slot 2
+      // 3rd and 4th go down to confronto 2, slots 1 and 2
+      // sort 3rd and 4th: bigger goes slot1, smaller goes slot2
+      var down = [r[2], r[3]].sort(function(a,b){ return (b.jogo4-a.jogo4)||(b.soma-a.soma); });
+      result[1][0] = down[0]; // slot 1 of confronto 2
+      result[1][1] = down[1]; // slot 2 of confronto 2
+
+    } else if (isSecond) {
+      // 2 biggest go up to confronto 1 slots 3 and 4
+      var up2 = [r[0], r[1]].sort(function(a,b){ return (b.jogo4-a.jogo4)||(b.soma-a.soma); });
+      result[0][2] = up2[0]; // slot 3 of confronto 1
+      result[0][3] = up2[1]; // slot 4 of confronto 1
+      // 3rd stays in confronto 2 - slot 3
+      result[1][2] = r[2];
+      // 4th goes down to confronto 3, slot 1
+      if (n > 2) result[2][0] = r[3];
+
+    } else if (isLast) {
+      // 1st and 2nd go up to penultimate, slots 3 and 4
+      var up = [r[0], r[1]].sort(function(a,b){ return (b.jogo4-a.jogo4)||(b.soma-a.soma); });
+      result[n-2][2] = up[0]; // slot 3 of penultimate
+      result[n-2][3] = up[1]; // slot 4 of penultimate
+      // 3rd and 4th stay in last confronto, slots 3 and 4
+      var stay = [r[2], r[3]].sort(function(a,b){ return (b.jogo4-a.jogo4)||(b.soma-a.soma); });
+      result[n-1][2] = stay[0]; // slot 3
+      result[n-1][3] = stay[1]; // slot 4
+
+    } else if (isPenult) {
+      // 1st goes up to confronto above, slot 4
+      result[i-1][3] = r[0];
+      // 2nd stays in penultimate - slot 2
+      result[i][1] = r[1];
+      // 3rd and 4th go down to last, slots 3 and 4
+      var downPen = [r[2], r[3]].sort(function(a,b){ return (b.jogo4-a.jogo4)||(b.soma-a.soma); });
+      result[n-1][2] = downPen[0]; // slot 3 of last
+      result[n-1][3] = downPen[1]; // slot 4 of last
+
+    } else {
+      // Middle confronto
+      // 1st goes up to confronto above, slot 4
+      result[i-1][3] = r[0];
+      // 2nd stays, slot 2
+      result[i][1] = r[1];
+      // 3rd stays, slot 3
+      result[i][2] = r[2];
+      // 4th goes down to confronto below, slot 1
+      result[i+1][0] = r[3];
+    }
+  }
+
+  // Build new groups from result
+  return groups.map(function(g, i) {
+    var newPlayers = result[i].map(function(p, slotIdx) {
+      if (!p) return {slot: slotIdx+1, name:'', crowns:0, jogo5:0};
+      return {slot: slotIdx+1, name: p.name, crowns: p.crowns, jogo5: 0};
+    });
+    return {
+      confronto: g.confronto,
+      confrontoNum: g.confrontoNum,
+      players: newPlayers
+    };
+  });
+}
+
 function render(f) { renderR4(DATA.masc, 'masc', f); renderR4(DATA.fem, 'fem', f); }
-function renderNext() { renderR5(DATA.next_masc, 'panel-next-masc'); renderR5(DATA.next_fem, 'panel-next-fem'); }
+function renderNext() {
+  // Check if we have jogo4 data to compute next round
+  var mascHasResults = DATA.masc.length > 0 && DATA.masc.some(function(g) {
+    return g.players.some(function(p){ return p.jogo4 > 0; });
+  });
+  var femHasResults = DATA.fem.length > 0 && DATA.fem.some(function(g) {
+    return g.players.some(function(p){ return p.jogo4 > 0; });
+  });
+
+  var nextMasc = mascHasResults ? computeNextRound(DATA.masc) : DATA.next_masc;
+  var nextFem  = femHasResults  ? computeNextRound(DATA.fem)  : DATA.next_fem;
+
+  renderR5(nextMasc, 'panel-next-masc');
+  renderR5(nextFem,  'panel-next-fem');
+}
 
 function switchView(v) {
   cView = v;
