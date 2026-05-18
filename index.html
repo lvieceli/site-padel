@@ -557,9 +557,16 @@ function processData(payload) {
   try {
     var csvText, cfg;
     if (typeof payload === 'object' && payload !== null && payload.csv) {
-      // payload ja e objeto {csv, cfg}
+      // payload ja e objeto {csv, cfg, agenda}
       csvText = payload.csv;
       cfg = payload.cfg || null;
+      // Limpa prazo se vier como data completa
+      if (cfg && cfg.prazo && cfg.prazo.length > 20) {
+        try {
+          var d = new Date(cfg.prazo);
+          cfg.prazo = ('0'+d.getDate()).slice(-2) + '/' + ('0'+(d.getMonth()+1)).slice(-2) + '/' + d.getFullYear();
+        } catch(e) {}
+      }
     } else if (typeof payload === 'string') {
       try {
         var obj = JSON.parse(payload);
