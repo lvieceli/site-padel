@@ -541,11 +541,11 @@ function applyConfig(cfg) {
   window._cfgProxima = cfg.proxima || 'Proxima';
   var bannerEl = document.querySelector('.rodada-text strong');
   if (bannerEl && cfg.rodada && cfg.prazo) {
-    bannerEl.textContent = cfg.rodada + ' - Prazo ate ' + cfg.prazo;
+    bannerEl.textContent = cfg.rodada + ' · Prazo ate ' + cfg.prazo;
   }
   var btnRanking = document.getElementById('btn-ranking');
   if (btnRanking && cfg.rodada) {
-    btnRanking.textContent = '🏆 Classificacao - ' + cfg.rodada + ' - ATUAL';
+    btnRanking.textContent = '🏆 Classificacao · ' + cfg.rodada + ' - ATUAL';
   }
   var proxBanner = document.querySelector('.proxima-banner strong');
   if (proxBanner && cfg.proxima) {
@@ -560,6 +560,10 @@ function processData(payload) {
       // payload ja e objeto {csv, cfg, agenda}
       csvText = payload.csv;
       cfg = payload.cfg || null;
+      // Remove sufixo "- Atual" ou "- ATUAL" do rodada se vier da planilha
+      if (cfg && cfg.rodada) {
+        cfg.rodada = cfg.rodada.replace(/\s*[-–]\s*Atual/i, '').trim();
+      }
       // Limpa prazo se vier como data completa
       if (cfg && cfg.prazo && cfg.prazo.length > 20) {
         try {
