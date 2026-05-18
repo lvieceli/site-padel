@@ -292,24 +292,24 @@ function renderR4(groups, cat, filter) {
         var nG = groups.length;
         var movement;
         if (i === 0) {
-          // confronto 1: rank 0,1 stay at top (green), rank 2,3 go down (red)
-          movement = (rank <= 1) ? 'up' : 'down';
+          // confronto 1: rank 0,1 STAY (yellow), rank 2,3 go DOWN (red)
+          movement = (rank <= 1) ? 'stay' : 'down';
         } else if (i === 1) {
-          // confronto 2: rank 0,1 go up (green), rank 2 stays (yellow), rank 3 down (red)
+          // confronto 2: rank 0,1 go UP (green), rank 2 STAYS (yellow), rank 3 DOWN (red)
           movement = (rank <= 1) ? 'up' : (rank === 2 ? 'stay' : 'down');
         } else if (i === nG - 1) {
-          // last: rank 0,1 go up (green), rank 2,3 stay at bottom (red)
-          movement = (rank <= 1) ? 'up' : 'down';
+          // last: rank 0,1 go UP (green), rank 2,3 STAY (yellow)
+          movement = (rank <= 1) ? 'up' : 'stay';
         } else if (i === nG - 2) {
-          // penultimate: rank 0 up (green), rank 1 stays (yellow), rank 2,3 down (red)
+          // penultimate: rank 0 UP (green), rank 1 STAYS (yellow), rank 2,3 DOWN (red)
           movement = (rank === 0) ? 'up' : (rank === 1 ? 'stay' : 'down');
         } else {
-          // middle: rank 0 up (green), rank 1,2 stay (yellow), rank 3 down (red)
+          // middle: rank 0 UP (green), rank 1,2 STAY (yellow), rank 3 DOWN (red)
           movement = (rank === 0) ? 'up' : (rank <= 2 ? 'stay' : 'down');
         }
-        if (movement === 'up')   slotCls = 'slot-num slot-1st';
+        if (movement === 'up')        slotCls = 'slot-num slot-1st';
         else if (movement === 'stay') slotCls = 'slot-num slot-2nd';
-        else                     slotCls = 'slot-num slot-4th';
+        else                          slotCls = 'slot-num slot-4th';
       }
 
       html += '<div class="' + rowCls + '">';
@@ -343,11 +343,12 @@ function renderR5(groups, panelId) {
       for (var c = 0; c < (p.crowns || 0); c++) crowns += crown();
       var displayName = empty ? 'A definir...' : esc(p.name) + crowns;
       var j5 = p.jogo5 > 0 ? '<div class="jogo-cell has-value">' + p.jogo5 + '</div>' : '<div class="jogo-cell">-</div>';
+      var somaVal = p.soma > 0 ? '<div class="soma-cell' + (isFem ? ' fem' : '') + '">' + p.soma + '</div>' : '<div class="soma-cell empty">-</div>';
       var nameCls = 'player-name' + (empty ? ' pending' : '');
       html += '<div class="player-row">';
       html += '<div class="slot-num next-slot">' + ((g.confrontoNum - 1) * 4 + p.slot) + '</div>';
       html += '<div class="' + nameCls + '">' + displayName + '</div>';
-      html += j5 + '<div class="soma-cell empty">-</div>';
+      html += j5 + somaVal;
       html += '</div>';
     }
     html += '</div>';
@@ -398,8 +399,8 @@ function computeNextRound(groups) {
     }
 
     function makeSlot(p) {
-      if (!p) return {slot:0, name:'', crowns:0, jogo5:0};
-      return {slot:0, name:p.name, crowns:p.crowns, jogo5:0};
+      if (!p) return {slot:0, name:'', crowns:0, jogo5:0, soma:0};
+      return {slot:0, name:p.name, crowns:p.crowns, jogo5:0, soma:p.soma};
     }
 
     if (isFirst) {
