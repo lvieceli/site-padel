@@ -25,7 +25,7 @@
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
   .rodada-banner{background:linear-gradient(135deg,rgba(200,240,0,0.07),rgba(200,240,0,0.03));border:1px solid rgba(200,240,0,0.22);border-radius:12px;padding:.85rem 1.1rem;margin-bottom:1.2rem;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
   .rodada-icon{font-size:1.3rem}
-  .rodada-text strong{color:var(--accent);font-size:1.1rem;display:block;font-weight:800;letter-spacing:.03em}
+  .rodada-text strong{color:var(--accent);font-size:1.15rem;display:block;font-weight:800;letter-spacing:.02em}
   .rodada-text span{color:var(--muted);font-size:.76rem}
   .nav-buttons{display:flex;gap:.6rem;margin-bottom:1.3rem}
   .nav-btn{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.65rem .8rem;font-family:"Outfit",sans-serif;font-size:.8rem;font-weight:600;color:var(--muted);cursor:pointer;transition:all .2s;text-align:center}
@@ -111,12 +111,12 @@
     <div class="rodada-icon">🗓️</div>
     <div class="rodada-text">
       <strong>Rodada 4 · Prazo até 07/06/2026</strong>
-      <span></span>
+      
     </div>
   </div>
 
   <div class="nav-buttons">
-    <button class="nav-btn active-ranking" id="btn-ranking" onclick="switchView('ranking')">🏆 Classificação · Rodada 4</button>
+    <button class="nav-btn active-ranking" id="btn-ranking" onclick="switchView('ranking')">🏆 Classificação · Rodada 4 - ATUAL</button>
     <button class="nav-btn" id="btn-proxima" onclick="switchView('proxima')">Formação da Próxima Rodada</button>
   </div>
 
@@ -521,7 +521,7 @@ function applyConfig(cfg) {
   }
   var btnRanking = document.getElementById('btn-ranking');
   if (btnRanking && cfg.rodada) {
-    btnRanking.textContent = 'Classificacao - ' + cfg.rodada + ' ATUAL';
+    btnRanking.textContent = '🏆 Classificacao - ' + cfg.rodada + ' - ATUAL';
   }
   var proxBanner = document.querySelector('.proxima-banner strong');
   if (proxBanner && cfg.proxima) {
