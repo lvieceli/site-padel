@@ -390,14 +390,31 @@ function applyConfig(cfg) {
 function processData(payload) {
   try {
     var csvText, cfg;
-    try {
-      var obj = (typeof payload === 'object') ? payload : JSON.parse(payload);
-      csvText = obj.csv;
-      cfg = obj.cfg;
-    } catch(e) {
-      csvText = String(payload);
-      cfg = null;
+    if (typeof payload === 'object' && payload !== null && payload.csv) {
+      // payload ja e objeto {csv, cfg}
+      csvText = payload.csv;
+      cfg = payload.cfg || null;
+    } else if (typeof payload === 'string') {
+      try {
+        var obj = JSON.parse(payload);
+        if (obj && obj.csv) {
+          csvText = obj.csv;
+          cfg = obj.cfg || null;
+        } else {
+          csvText = payload;
+          cfg = null;
+        }
+      } catch(e) {
+        csvText = payload;
+        cfg = null;
+      }
+    } else {
+      throw new Error('Formato invalido');
     }
+    // Garante que csvText e string
+    csvText = String(csvText);
+    // Normaliza quebras de linha escapadas
+    csvText = csvText.replace(/\\n/g, '\n').replace(/\\r/g, '');
     var rows = parseCSV(csvText);
     var data = buildData(rows);
     if (data.masc.length === 0 && data.fem.length === 0) throw new Error('Sem dados');
