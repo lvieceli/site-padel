@@ -343,7 +343,7 @@ function renderR5(groups, panelId) {
       for (var c = 0; c < (p.crowns || 0); c++) crowns += crown();
       var displayName = empty ? 'A definir...' : esc(p.name) + crowns;
       var j5 = p.jogo5 > 0 ? '<div class="jogo-cell has-value">' + p.jogo5 + '</div>' : '<div class="jogo-cell">-</div>';
-      var somaVal = p.soma > 0 ? '<div class="soma-cell' + (isFem ? ' fem' : '') + '">' + p.soma + '</div>' : '<div class="soma-cell empty">-</div>';
+      var somaVal = (p.soma > 0 && !empty) ? '<div class="soma-cell' + (isFem ? ' fem' : '') + '">' + p.soma + '</div>' : '<div class="soma-cell empty">-</div>';
       var nameCls = 'player-name' + (empty ? ' pending' : '');
       html += '<div class="player-row">';
       html += '<div class="slot-num next-slot">' + ((g.confrontoNum - 1) * 4 + p.slot) + '</div>';
