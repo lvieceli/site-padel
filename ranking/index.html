@@ -30,10 +30,10 @@
   .nav-buttons{display:flex;gap:.6rem;margin-bottom:1.3rem;flex-wrap:wrap}
   .nav-btn{flex:1;min-width:120px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.65rem .8rem;font-family:"Outfit",sans-serif;font-size:.8rem;font-weight:600;color:var(--muted);cursor:pointer;transition:all .2s;text-align:center}
   .nav-btn:hover{color:var(--text);border-color:#3a3a3a}
-  .nav-btn.active-ranking{background:var(--accent-dim);border-color:rgba(200,240,0,0.4);color:var(--accent)}
+  .nav-btn.active-ranking{background:var(--accent-dim);border-color:rgba(200,240,0,0.6);color:var(--accent);font-size:.9rem;font-weight:700;box-shadow:0 0 12px rgba(200,240,0,0.15)}
   .nav-btn.active-proxima{background:rgba(240,192,64,0.08);border-color:rgba(240,192,64,0.35);color:var(--next)}
   .nav-btn.active-hist{background:rgba(96,184,240,0.10);border-color:rgba(96,184,240,0.4);color:var(--hist)}
-  .nav-btn.hist-btn{font-size:.75rem;flex:0 1 auto;padding:.55rem .7rem}
+  .nav-btn.hist-btn{}
   .tabs{display:flex;margin-bottom:1.2rem;border-bottom:1px solid var(--border)}
   .tab{background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:"Outfit",sans-serif;font-size:.82rem;font-weight:600;padding:.5rem 1.1rem .6rem;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:.06em}
   .tab.active.masc{color:var(--accent);border-bottom-color:var(--accent)}
@@ -137,9 +137,9 @@
 
   <!-- BARRA DE NAVEGAÇÃO -->
   <div class="nav-buttons" id="navButtons">
+    <!-- Botões históricos gerados dinamicamente (inseridos ANTES dos fixos) -->
     <button class="nav-btn active-ranking" id="btn-ranking" onclick="switchView('ranking')">🏆 Classificação · ATUAL</button>
     <button class="nav-btn" id="btn-proxima" onclick="switchView('proxima')">Formação da Próxima Rodada</button>
-    <!-- Botões históricos gerados dinamicamente -->
   </div>
 
   <!-- RANKING ATUAL -->
@@ -517,16 +517,30 @@ function filterSearch() {
 // ============================================================
 // APLICA CONFIGURAÇÕES (rodada/prazo/proxima)
 // ============================================================
+function toOrdinal(n) {
+  // "Rodada 5" ou "5" → "5ª Rodada"
+  var num = parseInt(String(n).replace(/\D/g,''));
+  if (!num) return String(n);
+  return num + 'ª Rodada';
+}
+
 function applyConfig(cfg) {
   if (!cfg) return;
   window._cfgProxima = cfg.proxima || 'Proxima';
+  window._cfgRodada  = cfg.rodada  || '';
+  window._cfgProximaFull = cfg.proxima || '';
   var rodada = (cfg.rodada || '').replace(/\s*[-–]\s*Atual/i,'').trim();
   if (rodada && cfg.prazo) {
-    document.getElementById('rodadaTitle').textContent = rodada + ' · Prazo até ' + cfg.prazo;
+    document.getElementById('rodadaTitle').textContent = toOrdinal(rodada) + ' · Prazo até ' + cfg.prazo;
   }
-  document.getElementById('btn-ranking').textContent = '🏆 Classificação · ' + (rodada || 'ATUAL');
+  // Botão atual: "5ª Rodada - Atual" (destaque)
+  document.getElementById('btn-ranking').textContent = toOrdinal(rodada) + ' - Atual';
+  // Botão próxima: "6ª Rodada - Próxima Formação"
+  var proxNum = toOrdinal(cfg.proxima || '');
+  document.getElementById('btn-proxima').textContent = proxNum + ' - Próxima Formação';
+  // Banner próxima
   if (cfg.proxima) {
-    document.getElementById('proximaBannerTitle').textContent = '⚡ ' + cfg.proxima + ' - 2026 - Formação';
+    document.getElementById('proximaBannerTitle').textContent = '⚡ ' + proxNum + ' - 2026 - Formação';
   }
 }
 
@@ -534,26 +548,31 @@ function applyConfig(cfg) {
 // GERA BOTÕES DE HISTÓRICO dinamicamente
 // ============================================================
 function buildHistButtons(historico) {
-  var keys = Object.keys(historico).sort(); // "2026 Jogo 2", "2026 Jogo 3", etc.
+  var keys = Object.keys(historico);
   var nav = document.getElementById('navButtons');
   // Remove botões históricos antigos
-  var old = nav.querySelectorAll('.hist-btn');
-  for (var i = 0; i < old.length; i++) old[i].parentNode.removeChild(old[i]);
-  // Adiciona novos (mais recente primeiro = ordem inversa)
+  var oldBtns = nav.querySelectorAll('.hist-btn');
+  for (var i = 0; i < oldBtns.length; i++) oldBtns[i].parentNode.removeChild(oldBtns[i]);
+  // Ordena crescente: Jogo 2, Jogo 3, Jogo 4... (mais antigo primeiro = mais à esquerda)
   var sorted = keys.slice().sort(function(a,b){
-    var na = parseInt(a.replace(/\D/g,'')||0);
-    var nb = parseInt(b.replace(/\D/g,'')||0);
-    return nb - na; // decrescente: Jogo 4, Jogo 3, Jogo 2...
+    var na = parseInt(a.replace(/\D/g,'') || 0);
+    var nb = parseInt(b.replace(/\D/g,'') || 0);
+    return na - nb;
   });
+  var btnRanking = document.getElementById('btn-ranking');
   for (var i = 0; i < sorted.length; i++) {
     var key = sorted[i];
-    var label = '📋 ' + key.replace('2026 ', '');
+    // Extrai número: "2026 Jogo 4" → 4
+    var numMatch = key.match(/\d+$/);
+    var num = numMatch ? numMatch[0] : '';
+    var label = num + 'ª Rodada - Concluída';
     var btn = document.createElement('button');
     btn.className = 'nav-btn hist-btn';
     btn.textContent = label;
     btn.dataset.key = key;
     btn.onclick = (function(k){ return function(){ openHist(k); }; })(key);
-    nav.appendChild(btn);
+    // Insere ANTES do btn-ranking (botão atual)
+    nav.insertBefore(btn, btnRanking);
   }
 }
 
