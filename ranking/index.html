@@ -50,6 +50,9 @@
   .confronto-block:hover{border-color:#333}
   .confronto-block.next-block{border-color:rgba(240,192,64,0.2)}
   .confronto-block.hist-block{border-color:rgba(96,184,240,0.2)}
+  .confronto-block.wo-block{border-color:rgba(255,68,68,0.5)!important}
+  .wo-badge{background:rgba(255,68,68,0.15);border:1px solid rgba(255,68,68,0.5);color:#ff4444;font-size:.68rem;font-weight:800;letter-spacing:.1em;padding:.2rem .6rem;border-radius:4px;flex-shrink:0}
+  .hist-agenda-info{font-size:.78rem;color:#888;margin-left:auto;padding-right:.5rem;white-space:nowrap}
   .confronto-header{display:flex;align-items:center;justify-content:space-between;padding:.5rem 1rem;background:var(--surface2);border-bottom:1px solid var(--border);gap:.5rem}
   .confronto-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em}
   .confronto-title.masc{color:rgba(200,240,0,0.75)}
@@ -362,20 +365,31 @@ function renderHist(histKey, cat) {
   var groups = isFem ? histData.fem : histData.masc;
   if (!groups || groups.length === 0) { panel.innerHTML = '<p style="color:var(--muted);text-align:center;padding:2rem">Nenhum dado para esta categoria.</p>'; return; }
 
-  // Nome do jogo para o cabeçalho da coluna (ex: "Jogo 4")
   var jogoLabel = histKey.replace('2026 ', '');
 
   var html = '';
   for (var i = 0; i < groups.length; i++) {
     var g = groups[i];
-    html += '<div class="confronto-block hist-block">';
-    html += '<div class="confronto-header"><span class="confronto-title '+titleCls+'">'+esc(g.confronto)+'</span></div>';
+    var isWO = g.wo === true;
+    var blockCls = 'confronto-block hist-block' + (isWO ? ' wo-block' : '');
+    html += '<div class="' + blockCls + '">';
+
+    // Header com data/hora/quadra e WO
+    html += '<div class="confronto-header">';
+    html += '<span class="confronto-title ' + titleCls + '">' + esc(g.confronto) + '</span>';
+    if (isWO) {
+      html += '<span class="wo-badge">WO</span>';
+    } else if (g.dia || g.hora || g.quadra) {
+      var agInfo = (g.dia||'') + (g.hora ? ' · '+g.hora : '') + (g.quadra ? ' · Quadra '+g.quadra : '');
+      html += '<span class="hist-agenda-info">' + esc(agInfo) + '</span>';
+    }
+    html += '</div>';
+
     html += '<div class="col-headers"><div class="col-h"></div><div class="col-h">Jogador</div><div class="col-h right">'+esc(jogoLabel)+'</div><div class="col-h right">Soma</div></div>';
 
-    // Rankeia por jogo desc para mostrar cores
     var hasResult = g.players.some(function(p){ return p.jogo > 0; });
     var rankMap = {};
-    if (hasResult) {
+    if (hasResult && !isWO) {
       var ranked = g.players.slice().sort(function(a,b){ return b.jogo!==a.jogo ? b.jogo-a.jogo : b.soma-a.soma; });
       for (var r = 0; r < ranked.length; r++) rankMap[ranked[r].slot] = r;
     }
@@ -388,18 +402,17 @@ function renderHist(histKey, cat) {
       var somaVal = p.soma > 0 ? '<div class="soma-cell'+(isFem?' fem':'')+'">'+p.soma+'</div>' : '<div class="soma-cell empty">-</div>';
       var nameCls = 'player-name' + (empty ? ' empty' : '');
 
-      // Cores de movimentação
       var slotCls = 'slot-num hist-slot';
-      if (hasResult && !empty) {
+      if (!isWO && hasResult && !empty) {
         var rank = rankMap[p.slot]; var nG = groups.length; var movement;
-        if (i===0)       movement = (rank<=1) ? 'stay' : 'down';
-        else if (i===1)  movement = (rank<=1) ? 'up' : (rank===2 ? 'stay' : 'down');
+        if (i===0)         movement = (rank<=1) ? 'stay' : 'down';
+        else if (i===1)    movement = (rank<=1) ? 'up' : (rank===2 ? 'stay' : 'down');
         else if (i===nG-1) movement = (rank<=1) ? 'up' : 'stay';
         else if (i===nG-2) movement = (rank===0) ? 'up' : (rank===1 ? 'stay' : 'down');
-        else             movement = (rank===0) ? 'up' : (rank<=2 ? 'stay' : 'down');
-        if (movement==='up') slotCls='slot-num slot-1st';
-        else if (movement==='stay') slotCls='slot-num slot-2nd';
-        else slotCls='slot-num slot-4th';
+        else               movement = (rank===0) ? 'up' : (rank<=2 ? 'stay' : 'down');
+        if (movement==='up')        slotCls = 'slot-num slot-1st';
+        else if (movement==='stay') slotCls = 'slot-num slot-2nd';
+        else                        slotCls = 'slot-num slot-4th';
       }
 
       html += '<div class="player-row"><div class="'+slotCls+'">'+(((g.numero-1)*4)+p.slot)+'</div>';
