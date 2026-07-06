@@ -48,6 +48,7 @@
   .search-icon{position:absolute;left:.75rem;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
   .confronto-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:.75rem;overflow:hidden}
   .confronto-block:hover{border-color:#333}
+  .confronto-block.wo-atual{border-color:rgba(255,68,68,0.5)!important;background:rgba(255,68,68,0.03)}
   .confronto-block.next-block{border-color:rgba(240,192,64,0.2)}
   .confronto-block.hist-block{border-color:rgba(96,184,240,0.2)}
   .confronto-block.wo-block{border-color:rgba(255,68,68,0.5)!important}
@@ -273,9 +274,9 @@ function renderR4(groups, cat, filter) {
     if (q) { for (var j = 0; j < g.players.length; j++) { if (g.players[j].name.toLowerCase().indexOf(q) >= 0) { ok = true; break; } } }
     else ok = true;
     if (!ok) continue;
-    html += '<div class="confronto-block">';
     var agKey = (isFem ? 'fem' : 'masc') + '_' + g.confrontoNum;
     var ag = AGENDA[agKey] || null;
+    var isWOAtual = ag && ag.wo === true;
     var hasResult = g.players.some(function(p){ return p.jogo4 > 0; });
     var agInfo = '';
     if (ag && (ag.dia || ag.hora || ag.quadra)) {
@@ -283,9 +284,14 @@ function renderR4(groups, cat, filter) {
     }
     var dotClass = hasResult ? 'verde' : (agInfo ? 'amarelo' : 'cinza');
     var statusLabel = dotClass === 'verde' ? 'CONCLUIDO' : (dotClass === 'amarelo' ? 'AGENDADO' : 'NAO AGENDADO');
+    html += '<div class="confronto-block' + (isWOAtual ? ' wo-atual' : '') + '">';
     html += '<div class="confronto-header">';
     html += '<span class="confronto-title ' + cat + '">' + esc(g.confronto) + '</span>';
-    if (agInfo) html += '<span class="agenda-info">' + agInfo + '</span>';
+    if (isWOAtual) {
+      html += '<span class="wo-badge">WO</span>';
+    } else if (agInfo) {
+      html += '<span class="agenda-info">' + agInfo + '</span>';
+    }
     html += '<span class="agenda-status"><span class="agenda-dot '+dotClass+'"></span><span class="agenda-label '+dotClass+'">'+statusLabel+'</span></span>';
     html += '</div>';
     html += '<div class="col-headers"><div class="col-h"></div><div class="col-h">Jogador</div><div class="col-h right">Rodada</div><div class="col-h right">Soma</div></div>';
@@ -429,6 +435,14 @@ function renderHist(histKey, cat) {
 function computeNextRound(groups) {
   var n = groups.length;
   if (n === 0) return groups;
+  // Mapa de WO por índice (usa AGENDA do confronto atual)
+  var woMap = {};
+  groups.forEach(function(g, idx) {
+    var agMasc = AGENDA['masc_' + g.confrontoNum];
+    var agFem  = AGENDA['fem_'  + g.confrontoNum];
+    var ag = agMasc || agFem || null;
+    if (ag && ag.wo === true) woMap[idx] = true;
+  });
   function rankPlayers(players) {
     var hasJogo4 = players.some(function(p){ return p.jogo4 > 0; });
     if (!hasJogo4) return null;
@@ -439,6 +453,16 @@ function computeNextRound(groups) {
   function sortTwo(a,b){ if(!a||!b) return [a,b]; return (b.jogo4!==a.jogo4)?(b.jogo4>a.jogo4?[b,a]:[a,b]):(b.soma>a.soma?[b,a]:[a,b]); }
   function makeSlot(p){ if(!p) return {slot:0,name:'',crowns:0,jogo5:0,soma:0}; return {slot:0,name:p.name,crowns:p.crowns,jogo5:0,soma:p.soma}; }
   for (var i = 0; i < n; i++) {
+    // WO: todos ficam no mesmo confronto (último) ou descem (meio/primeiro)
+    if (woMap[i]) {
+      var dest = (i === n - 1) ? i : i + 1;
+      var jogWO = groups[i].players;
+      for (var w = 0; w < jogWO.length; w++) {
+        result[dest][w] = makeSlot(jogWO[w]);
+        result[dest][w].slot = w + 1;
+      }
+      continue;
+    }
     var r = ranked[i]; if (!r) continue;
     var isFirst=(i===0),isSecond=(i===1),isLast=(i===n-1),isPenult=(i===n-2);
     if (isFirst){
