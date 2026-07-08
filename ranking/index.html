@@ -484,6 +484,7 @@ footer{text-align:center;padding:1.8rem 0 2.5rem;color:#2e2e2e;font-size:.68rem;
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
+var chr39 = String.fromCharCode(39);
 var IS_ADMIN = window.location.search.indexOf('admin=pj2026') >= 0;
 var APPS_URL="https://script.google.com/macros/s/AKfycbzEJ2SPXBL8nrKxYMRdT6pcHKSc05Np-C6z6NNyhhibMpJB8Cdw2fDkeyb0T9QoBNg1/exec";
 var DATA={masc:[],fem:[],next_masc:[],next_fem:[]};
@@ -603,7 +604,8 @@ function renderR4(groups,cat,filter){
         else slotCls="slot-num slot-4th";
       }
       html+='<div class="'+rowCls+'"><div class="'+slotCls+'">'+(((g.confrontoNum-1)*4)+p.slot)+"</div>";
-      html+='<div class="'+nameCls+'">'+displayName+"</div>"+j4+sm+"</div>";
+      var perfilBtn = !empty ? '<button class="btn-perfil" onclick="event.stopPropagation();openPerfil(this.getAttribute(chr39+\'data-nome\'+chr39))" data-nome="'+esc(p.name)+'">&#128202;</button>' : '';
+      html+='<div class="'+nameCls+'" style="display:flex;align-items:center;gap:.3rem">'+displayName+perfilBtn+"</div>"+j4+sm+"</div>";
     }
     html+="</div>";
   }
@@ -1067,61 +1069,100 @@ function calcularStatsLocal(historico) {
   var jogoKeys = Object.keys(historico).sort(function(a,b){
     return parseInt(a.replace(/\D/g,''))-parseInt(b.replace(/\D/g,''));
   });
+  var totalJogos = jogoKeys.length;
   var jogadores = {};
+
+  // Coleta todos os jogadores e seus dados por rodada
   jogoKeys.forEach(function(jogo) {
     var hd = historico[jogo];
     ['masc','fem'].forEach(function(cat) {
       (hd[cat]||[]).forEach(function(g) {
+        var totalConfrontos = (hd[cat]||[]).length;
         g.players.forEach(function(p) {
           var nome = cleanNome(p.nome);
-          if (!nome || jogadores[nome]) return;
-          jogadores[nome] = {cat:cat, nomeOriginal:p.nome};
-        });
-      });
-    });
-  });
-  Object.keys(jogadores).forEach(function(nome) {
-    var rodadas = [];
-    jogoKeys.forEach(function(jogo) {
-      var hd = historico[jogo];
-      ['masc','fem'].forEach(function(cat) {
-        (hd[cat]||[]).forEach(function(g) {
-          g.players.forEach(function(p) {
-            if (cleanNome(p.nome) !== nome || !p.jogo || p.jogo===0) return;
-            var jogComPts = g.players.filter(function(x){return x.jogo>0;});
-            var sorted = jogComPts.slice().sort(function(a,b){return b.jogo-a.jogo;});
-            var posicao=4;
-            for(var pi=0;pi<sorted.length;pi++){if(cleanNome(sorted[pi].nome)===nome){posicao=pi+1;break;}}
-            var mediaConf=jogComPts.length>0?jogComPts.reduce(function(a,x){return a+x.jogo;},0)/jogComPts.length:0;
-            var temCoroa=(p.nome||'').indexOf('\uD83D\uDC51')>=0;
-            rodadas.push({jogo:jogo,pontos:p.jogo,soma:p.soma||0,posicao:posicao,
-              confrontoNum:g.numero||g.confrontoNum||1,totalConfrontos:(hd[cat]||[]).length,
-              mediaConf:mediaConf,temCoroa:temCoroa});
+          if (!nome || !p.jogo || p.jogo===0) return;
+          if (!jogadores[nome]) jogadores[nome] = {cat:cat, nomeOriginal:p.nome, rodadas:[]};
+
+          // Posição no confronto
+          var jogComPts = g.players.filter(function(x){return x.jogo>0;});
+          var sorted = jogComPts.slice().sort(function(a,b){return b.jogo-a.jogo;});
+          var posicao = 4;
+          for (var pi=0;pi<sorted.length;pi++){
+            if(cleanNome(sorted[pi].nome)===nome){posicao=pi+1;break;}
+          }
+          var temCoroa = (p.nome||'').indexOf('\uD83D\uDC51')>=0;
+
+          jogadores[nome].rodadas.push({
+            jogo:jogo, pontos:p.jogo, soma:p.soma||0,
+            posicao:posicao, confrontoNum:g.numero||g.confrontoNum||1,
+            totalConfrontos:totalConfrontos, temCoroa:temCoroa
           });
         });
       });
     });
-    var scores=[];
+  });
+
+  // Calcula stats e score para cada jogador
+  Object.keys(jogadores).forEach(function(nome) {
+    var jog = jogadores[nome];
+    var rodadas = jog.rodadas;
+    if (rodadas.length === 0) return;
+
+    var vitorias=0, coroas=0, totalPts=0, melhorPts=0, confAtual=0;
     rodadas.forEach(function(r){
-      var ptScore=r.mediaConf>0?Math.min(10,Math.max(0,5+(r.pontos-r.mediaConf)/r.mediaConf*10)):5;
-      var posScore=[10,7,4,1][r.posicao-1]||1;
-      var nivelScore=Math.max(1,10-(r.confrontoNum-1)*(9/Math.max(1,r.totalConfrontos-1)));
-      var consScore=scores.length>0?Math.max(0,10-Math.abs(ptScore-scores[scores.length-1].total)):ptScore;
-      var tendScore=5;
-      if(scores.length>=2){var m=scores.slice(-2).reduce(function(a,s){return a+s.total;},0)/2;tendScore=ptScore>m?Math.min(10,5+(ptScore-m)):Math.max(0,5-(m-ptScore));}
-      var total=ptScore*0.40+posScore*0.20+nivelScore*0.15+consScore*0.10+tendScore*0.10+(r.temCoroa?10:5)*0.05;
-      scores.push({jogo:r.jogo,total:parseFloat(total.toFixed(2)),pontos:r.pontos,posicao:r.posicao,confrontoNum:r.confrontoNum,temCoroa:r.temCoroa});
+      totalPts+=r.pontos;
+      if(r.posicao===1) vitorias++;
+      if(r.temCoroa) coroas++;
+      if(r.pontos>melhorPts) melhorPts=r.pontos;
+      confAtual=r.confrontoNum;
     });
-    var pesoTotal=0,somaScore=0;
-    scores.forEach(function(s,idx){var p=idx+1;somaScore+=s.total*p;pesoTotal+=p;});
-    var vitorias=0,coroas=0,totalPts=0,melhorPts=0,confAtual=0;
-    rodadas.forEach(function(r){totalPts+=r.pontos;if(r.posicao===1)vitorias++;if(r.temCoroa)coroas++;if(r.pontos>melhorPts)melhorPts=r.pontos;confAtual=r.confrontoNum;});
-    stats[nome]={nome:nome,nomeOriginal:jogadores[nome].nomeOriginal,cat:jogadores[nome].cat,foto:'',
-      score:pesoTotal>0?parseFloat((somaScore/pesoTotal).toFixed(2)):0,
-      scoreRodada:scores.length>0?scores[scores.length-1].total:0,
-      scoreRodadas:scores,rodadas:rodadas,vitorias:vitorias,coroas:coroas,totalPontos:totalPts,
-      rodadasJogadas:rodadas.length,melhorPontos:melhorPts,confrontoAtual:confAtual,
-      mediaPontos:rodadas.length>0?parseFloat((totalPts/rodadas.length).toFixed(1)):0};
+    var mediaPontos = totalPts / rodadas.length;
+
+    // ── NOVA FÓRMULA DO PADEL SCORE ──────────────────────────
+    // Normalização dos pontos: usa a maior pontuação de todos os jogadores como referência
+    var maxPontos = 100; // referência fixa para normalizar
+
+    var scores = rodadas.map(function(r) {
+      // 1. VITÓRIA (40%) — 1º lugar = 10, 2º = 6, 3º = 3, 4º = 0
+      var vitScore = [10, 6, 3, 0][r.posicao-1] || 0;
+
+      // 2. PONTOS ABSOLUTOS (30%) — pontos / maxPontos * 10
+      var ptScore = Math.min(10, (r.pontos / maxPontos) * 10);
+
+      // 3. NÍVEL DO CONFRONTO (20%) — C1=10, C2=9, C3=8... até 1
+      var nivelScore = Math.max(1, 10 - (r.confrontoNum - 1) * (9 / Math.max(1, r.totalConfrontos - 1)));
+
+      // 4. CONSISTÊNCIA (10%) — bônus por coroa, penaliza posição ruim
+      var consScore = r.temCoroa ? 10 : (r.posicao <= 2 ? 7 : r.posicao === 3 ? 4 : 1);
+
+      var total = vitScore*0.40 + ptScore*0.30 + nivelScore*0.20 + consScore*0.10;
+      return {
+        jogo:r.jogo, total:parseFloat(total.toFixed(2)),
+        pontos:r.pontos, posicao:r.posicao,
+        confrontoNum:r.confrontoNum, temCoroa:r.temCoroa
+      };
+    });
+
+    // Score geral = média ponderada (rodadas recentes valem mais)
+    var pesoTotal=0, somaScore=0;
+    scores.forEach(function(s,idx){
+      var peso = idx + 1;
+      somaScore += s.total * peso;
+      pesoTotal += peso;
+    });
+    var scoreGeral = pesoTotal>0 ? parseFloat((somaScore/pesoTotal).toFixed(2)) : 0;
+    var scoreRodada = scores.length>0 ? scores[scores.length-1].total : 0;
+
+    stats[nome] = {
+      nome:nome, nomeOriginal:jog.nomeOriginal,
+      cat:jog.cat, foto:'',
+      score:scoreGeral, scoreRodada:scoreRodada,
+      scoreRodadas:scores, rodadas:rodadas,
+      vitorias:vitorias, coroas:coroas, totalPontos:totalPts,
+      rodadasJogadas:rodadas.length, melhorPontos:melhorPts,
+      confrontoAtual:confAtual,
+      mediaPontos:parseFloat(mediaPontos.toFixed(1))
+    };
   });
   return stats;
 }
