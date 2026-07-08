@@ -134,14 +134,31 @@ footer{text-align:center;padding:1.8rem 0 2.5rem;color:#2e2e2e;font-size:.68rem;
 .check-badge{position:absolute;top:.35rem;right:.35rem;width:15px;height:15px;border-radius:50%;background:var(--match);display:flex;align-items:center;justify-content:center;font-size:.5rem;color:#000;font-weight:900}
 /* Calendário */
 .cal-intro{font-size:.74rem;color:var(--muted);margin-bottom:.8rem;line-height:1.5}
-.cal-grid{display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.2rem}
+.cal-section-label{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:1rem 0 .5rem .2rem;display:flex;align-items:center;gap:.6rem}
+.cal-section-label::after{content:"";flex:1;height:1px;background:var(--border)}
+.cal-col-headers{display:grid;gap:.35rem;padding:0 .8rem;margin-bottom:.2rem}
+.cal-col-headers.sem{grid-template-columns:28px 1fr 1fr 1fr}
+.cal-col-headers.fds{grid-template-columns:28px 1fr 1fr}
+.col-hdr-spacer{width:28px}
+.col-hdr-btn{border-radius:7px;padding:.38rem .25rem;font-family:"Outfit",sans-serif;font-size:.65rem;font-weight:800;cursor:pointer;transition:all .15s;text-align:center;border:1px dashed;letter-spacing:.03em}
+.col-hdr-btn.manha{border-color:rgba(96,184,240,0.35);color:rgba(96,184,240,0.6);background:rgba(96,184,240,0.05)}
+.col-hdr-btn.tarde{border-color:rgba(240,192,64,0.35);color:rgba(240,192,64,0.6);background:rgba(240,192,64,0.05)}
+.col-hdr-btn.noite{border-color:rgba(200,100,240,0.35);color:rgba(200,100,240,0.6);background:rgba(200,100,240,0.05)}
+.col-hdr-btn.manha.all-active{border-style:solid;border-color:rgba(96,184,240,0.7);color:#60b8f0;background:rgba(96,184,240,0.12)}
+.col-hdr-btn.tarde.all-active{border-style:solid;border-color:rgba(240,192,64,0.7);color:#f0c040;background:rgba(240,192,64,0.12)}
+.col-hdr-btn.noite.all-active{border-style:solid;border-color:rgba(200,100,240,0.7);color:#c864f0;background:rgba(200,100,240,0.12)}
+.col-hdr-btn:hover{border-style:solid;opacity:1}
+.cal-grid{display:flex;flex-direction:column;gap:.35rem;margin-bottom:.5rem}
 .cal-day{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
-.cal-day-header{display:flex;align-items:center;justify-content:space-between;padding:.45rem .8rem;background:var(--surface2)}
+.cal-day-header{display:flex;align-items:center;justify-content:space-between;padding:.4rem .8rem;background:var(--surface2)}
 .cal-day-label{font-size:.76rem;font-weight:700;color:var(--text)}
 .cal-day-label.weekend{color:var(--next)}
-.cal-periods{display:flex;gap:.35rem;padding:.5rem .8rem}
+.cal-periods{display:flex;gap:.35rem;padding:.45rem .8rem}
 .period-btn{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:.4rem .25rem;font-family:"Outfit",sans-serif;font-size:.7rem;font-weight:600;color:var(--muted);cursor:pointer;transition:all .15s;text-align:center}
 .period-btn:hover{border-color:#555;color:var(--text)}
+.period-btn.active.manha{background:rgba(96,184,240,0.12);border-color:rgba(96,184,240,0.5);color:#60b8f0}
+.period-btn.active.tarde{background:rgba(240,192,64,0.12);border-color:rgba(240,192,64,0.5);color:#f0c040}
+.period-btn.active.noite{background:rgba(200,100,240,0.12);border-color:rgba(200,100,240,0.5);color:#c864f0}
 .period-btn.active{background:rgba(200,240,0,0.12);border-color:var(--accent);color:var(--accent)}
 .btn-toggle-all{background:none;border:1px solid #333;border-radius:5px;color:#555;font-family:"Outfit",sans-serif;font-size:.6rem;font-weight:700;padding:.15rem .45rem;cursor:pointer;transition:all .15s;white-space:nowrap}
 .btn-toggle-all:hover{border-color:#555;color:var(--muted)}
@@ -301,9 +318,9 @@ var MESES=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","De
 // Estado do agendamento
 var AG={key:"",num:0,cat:"",players:[],selIdx:-1,dataIni:null,dataFim:null,disps:{}};
 
-// ── STORAGE ──
-async function sGet(k){try{var r=await window.storage.get("ag_"+k);return r?JSON.parse(r.value):null;}catch(e){return null;}}
-async function sSet(k,v){try{await window.storage.set("ag_"+k,JSON.stringify(v));return true;}catch(e){return false;}}
+// ── STORAGE (localStorage) ──
+async function sGet(k){try{var r=localStorage.getItem("ag_"+k);return r?JSON.parse(r):null;}catch(e){return null;}}
+async function sSet(k,v){try{localStorage.setItem("ag_"+k,JSON.stringify(v));return true;}catch(e){return false;}}
 
 // ── UTILS ──
 function parseCSV(t){var rows=t.split("\n"),res=[];for(var i=0;i<rows.length;i++){var ln=rows[i],cells=[],inQ=false,cell="";for(var j=0;j<ln.length;j++){var ch=ln[j];if(ch==='"'){inQ=!inQ;}else if(ch===","&&!inQ){cells.push(cell.trim());cell="";}else{cell+=ch;}}cells.push(cell.trim());if(cells.some(function(c){return c!=="";})){ res.push(cells);}}return res;}
@@ -497,24 +514,84 @@ function selectPlayer(idx){
   renderPlayerSel();renderCal();
   document.getElementById("calSection").className="";
 }
+function getPeriodoClass(per){
+  if(per==='Manhã') return 'manha';
+  if(per==='Tarde') return 'tarde';
+  return 'noite';
+}
+
 function renderCal(){
-  var datas=getDatas(),p=AG.players[AG.selIdx],pd=(AG.disps[p.name])||{},html="";
-  datas.forEach(function(d){
-    var k=dk(d),perds=periodos(d),fds=isFds(d),sel=pd[k]||[];
-    var todosAtivos=perds.every(function(per){return sel.indexOf(per)>=0;});
-    html+='<div class="cal-day">';
-    html+='<div class="cal-day-header">';
-    html+='<span class="cal-day-label'+(fds?' weekend':'')+'">'+(fds?'<strong>':'')+fmtD(d)+(fds?'</strong>':'')+'</span>';
-    html+='<button class="btn-toggle-all'+(todosAtivos?' active':'')+'" data-dk="'+k+'" data-perds="'+perds.join(',')+'" onclick="toggleAllBtn(this)">'+(todosAtivos?'✓ Todos':'Todos')+'</button>';
-    html+='</div>';
-    html+='<div class="cal-periods">';
-    perds.forEach(function(per){
-      var active=sel.indexOf(per)>=0;
-      html+='<button class="period-btn'+(active?' active':'')+'" data-dk="'+k+'" data-per="'+per+'" onclick="togglePerBtn(this)">'+per+'</button>';
+  var datas=getDatas(),p=AG.players[AG.selIdx],pd=(AG.disps[p.name])||{};
+  var diasSemana=datas.filter(function(d){return !isFds(d);});
+  var diasFds=datas.filter(function(d){return isFds(d);});
+
+
+  function renderColHeaders(perdsDisponiveis, tipo){
+    var gridCls = tipo==='fds' ? 'fds' : 'sem';
+    var h='<div class="cal-col-headers '+gridCls+'"><div class="col-hdr-spacer"></div>';
+    perdsDisponiveis.forEach(function(per){
+      var lista = tipo==='fds' ? diasFds : diasSemana;
+      var todosAtivos = lista.every(function(d){var s=(pd[dk(d)]||[]);return s.indexOf(per)>=0;});
+      var pc = getPeriodoClass(per);
+      h+='<button class="col-hdr-btn '+pc+(todosAtivos?' all-active':'')+'" data-tipo="'+tipo+'" data-per="'+per+'" onclick="quickToggle(this)">';
+      h+=(todosAtivos?'✓ ':'')+per;
+      h+='</button>';
     });
-    html+='</div></div>';
-  });
+    h+='</div>';
+    return h;
+  }
+
+  function renderDias(lista, tipo){
+    var perdsRef = tipo==='fds' ? ['Manhã','Tarde'] : ['Manhã','Tarde','Noite'];
+    var gridCols = tipo==='fds' ? '28px 1fr 1fr' : '28px 1fr 1fr 1fr';
+    var h='';
+    lista.forEach(function(d){
+      var k=dk(d),fds=isFds(d),sel=pd[k]||[];
+      h+='<div class="cal-day" style="overflow:visible">';
+      h+='<div style="display:grid;grid-template-columns:'+gridCols+';gap:.35rem;align-items:center;padding:.45rem .8rem;background:var(--surface2);border-bottom:1px solid var(--border)">';
+      h+='<span class="cal-day-label'+(fds?' weekend':'')+'" style="font-size:.72rem">'+(fds?'<b>':'')+fmtD(d).split(',')[0]+(fds?'</b>':'')+'<br><span style="font-size:.6rem;font-weight:400;color:var(--muted)">'+fmtD(d).split(',')[1].trim()+'</span></span>';
+      perdsRef.forEach(function(per){
+        var active=sel.indexOf(per)>=0;
+        var pc=getPeriodoClass(per);
+        h+='<button class="period-btn'+(active?' active '+pc:'')+'" data-dk="'+k+'" data-per="'+per+'" onclick="togglePerBtn(this)" style="margin:0">'+(active?'✓ ':'')+per+'</button>';
+      });
+      h+='</div></div>';
+    });
+    return h;
+  }
+
+  var html='';
+  if(diasSemana.length>0){
+    var perdsSemanais=['Manhã','Tarde','Noite'];
+    html+='<div class="cal-section-label">⚡ Dias de Semana</div>';
+    html+=renderColHeaders(perdsSemanais,'sem');
+    html+='<div class="cal-grid" style="gap:.25rem">'+renderDias(diasSemana,'sem')+'</div>';
+  }
+  if(diasFds.length>0){
+    html+='<div class="cal-section-label" style="margin-top:1rem">🌅 Fins de Semana</div>';
+    html+=renderColHeaders(['Manhã','Tarde'],'fds');
+    html+='<div class="cal-grid" style="gap:.25rem">'+renderDias(diasFds,'fds')+'</div>';
+  }
   document.getElementById("calGrid").innerHTML=html;
+}
+function quickToggle(btn){
+  var tipo=btn.getAttribute('data-tipo'); // 'sem' ou 'fds'
+  var per=btn.getAttribute('data-per');
+  var p=AG.players[AG.selIdx];
+  if(!AG.disps[p.name])AG.disps[p.name]={};
+  var datas=getDatas();
+  var lista=datas.filter(function(d){return tipo==='fds'?isFds(d):!isFds(d);});
+  // Verifica se todos já estão marcados
+  var todosAtivos=lista.every(function(d){var s=(AG.disps[p.name][dk(d)]||[]);return s.indexOf(per)>=0;});
+  lista.forEach(function(d){
+    var k=dk(d);
+    if(!AG.disps[p.name][k])AG.disps[p.name][k]=[];
+    var arr=AG.disps[p.name][k],idx=arr.indexOf(per);
+    if(todosAtivos){if(idx>=0)arr.splice(idx,1);}
+    else{if(idx<0)arr.push(per);}
+    if(AG.disps[p.name][k].length===0)delete AG.disps[p.name][k];
+  });
+  renderCal();renderCruz();
 }
 function toggleAllBtn(btn){
   var k=btn.getAttribute('data-dk');
