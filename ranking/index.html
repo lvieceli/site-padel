@@ -220,6 +220,94 @@ footer{text-align:center;padding:1.8rem 0 2.5rem;color:#2e2e2e;font-size:.68rem;
   .player-selector{grid-template-columns:repeat(2,1fr)}
   .agenda-screen{padding:.8rem}
 }
+
+/* ── DESTAQUES DA RODADA ── */
+.destaques-section{margin-bottom:1.3rem}
+.destaques-title{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:.75rem;display:flex;align-items:center;gap:.6rem}
+.destaques-title::after{content:"";flex:1;height:1px;background:var(--border)}
+.destaques-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.destaque-cat-label{font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.4rem;padding-left:.2rem}
+.destaque-top{background:linear-gradient(135deg,rgba(200,240,0,0.06),rgba(200,240,0,0.02));border:1px solid rgba(200,240,0,0.2);border-radius:12px;padding:.75rem;cursor:pointer;transition:all .2s}
+.destaque-top.fem{background:linear-gradient(135deg,rgba(255,107,157,0.06),rgba(255,107,157,0.02));border-color:rgba(255,107,157,0.2)}
+.destaque-top:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(0,0,0,0.3)}
+.destaque-top-inner{display:flex;align-items:center;gap:.6rem}
+.destaque-foto{width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid rgba(200,240,0,0.4);flex-shrink:0;background:var(--surface2)}
+.destaque-foto.fem{border-color:rgba(255,107,157,0.4)}
+.destaque-foto-placeholder{width:42px;height:42px;border-radius:50%;background:var(--surface2);border:2px solid rgba(200,240,0,0.3);display:flex;align-items:center;justify-content:center;font-family:"Bebas Neue",cursive;font-size:1.1rem;color:var(--accent);flex-shrink:0}
+.destaque-foto-placeholder.fem{border-color:rgba(255,107,157,0.3);color:var(--fem)}
+.destaque-info{flex:1;min-width:0}
+.destaque-nome{font-size:.82rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.destaque-scores{display:flex;gap:.4rem;margin-top:.2rem;flex-wrap:wrap}
+.destaque-score-geral{font-size:.65rem;font-weight:700;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:.1rem .35rem}
+.destaque-score-rodada{font-size:.68rem;font-weight:800;color:var(--accent);background:rgba(200,240,0,0.1);border:1px solid rgba(200,240,0,0.3);border-radius:4px;padding:.1rem .35rem}
+.destaque-score-rodada.fem{color:var(--fem);background:rgba(255,107,157,0.1);border-color:rgba(255,107,157,0.3)}
+.top5-grid{display:flex;flex-direction:column;gap:.3rem;margin-top:.5rem}
+.top5-item{display:flex;align-items:center;gap:.5rem;padding:.3rem .5rem;background:var(--surface);border:1px solid var(--border);border-radius:7px;cursor:pointer;transition:all .15s}
+.top5-item:hover{border-color:#444;background:var(--surface2)}
+.top5-rank{font-size:.65rem;font-weight:800;color:var(--muted);width:14px;text-align:center;flex-shrink:0}
+.top5-rank.gold{color:#ffd700}
+.top5-rank.silver{color:#c0c0c0}
+.top5-rank.bronze{color:#cd7f32}
+.top5-foto-mini{width:22px;height:22px;border-radius:50%;object-fit:cover;flex-shrink:0;background:var(--surface2);border:1px solid var(--border)}
+.top5-nome{font-size:.75rem;font-weight:600;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top5-score{font-size:.7rem;font-weight:800;color:var(--accent)}
+.top5-score.fem{color:var(--fem)}
+.destaques-toggle{background:none;border:none;color:var(--muted);font-size:.65rem;font-family:"Outfit",sans-serif;cursor:pointer;padding:.2rem .4rem;border-radius:4px;transition:color .15s}
+.destaques-toggle:hover{color:var(--text)}
+/* ── PERFIL DO JOGADOR ── */
+#view-perfil{position:fixed;inset:0;background:var(--bg);z-index:100;overflow-y:auto}
+.perfil-screen{max-width:680px;margin:0 auto;padding:1.2rem}
+.perfil-back{display:flex;align-items:center;gap:.6rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.7rem 1rem;cursor:pointer;color:var(--muted);font-size:.82rem;font-weight:600;margin-bottom:1.2rem;transition:all .2s;width:100%;font-family:"Outfit",sans-serif}
+.perfil-back:hover{color:var(--text);border-color:#444}
+.perfil-hero{display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem;padding:1rem;background:var(--surface);border:1px solid var(--border);border-radius:14px}
+.perfil-foto{width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--accent);flex-shrink:0}
+.perfil-foto.fem{border-color:var(--fem)}
+.perfil-foto-ph{width:72px;height:72px;border-radius:50%;background:var(--surface2);border:3px solid var(--accent);display:flex;align-items:center;justify-content:center;font-family:"Bebas Neue",cursive;font-size:1.8rem;color:var(--accent);flex-shrink:0}
+.perfil-foto-ph.fem{border-color:var(--fem);color:var(--fem)}
+.perfil-hero-info{flex:1;min-width:0}
+.perfil-nome{font-family:"Bebas Neue",cursive;font-size:1.5rem;letter-spacing:.06em;color:var(--text);line-height:1}
+.perfil-confronto{font-size:.72rem;color:var(--muted);margin-top:.2rem}
+.perfil-badges{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.5rem}
+.perfil-badge{font-size:.62rem;font-weight:700;padding:.2rem .5rem;border-radius:4px;border:1px solid}
+.perfil-badge.vitoria{background:rgba(76,175,80,0.1);border-color:rgba(76,175,80,0.3);color:#4caf50}
+.perfil-badge.coroa{background:rgba(255,215,0,0.1);border-color:rgba(255,215,0,0.3);color:#ffd700}
+.perfil-badge.media{background:rgba(96,184,240,0.1);border-color:rgba(96,184,240,0.3);color:#60b8f0}
+.perfil-badge.melhor{background:rgba(240,192,64,0.1);border-color:rgba(240,192,64,0.3);color:#f0c040}
+/* Score IA */
+.score-ia-card{background:linear-gradient(135deg,#0a0a1a,#111122);border:1px solid rgba(200,240,0,0.3);border-radius:14px;padding:1rem 1.1rem;margin-bottom:1rem;position:relative;overflow:hidden}
+.score-ia-card::before{content:"";position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:radial-gradient(circle,rgba(200,240,0,0.08),transparent);pointer-events:none}
+.score-ia-label{font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.15em;color:rgba(200,240,0,0.6);margin-bottom:.5rem}
+.score-ia-main{display:flex;align-items:flex-end;gap:1rem;flex-wrap:wrap}
+.score-ia-geral{font-family:"Bebas Neue",cursive;font-size:3rem;color:var(--accent);line-height:1}
+.score-ia-geral-label{font-size:.6rem;color:var(--muted);margin-bottom:.3rem}
+.score-ia-rodada-box{background:rgba(200,240,0,0.08);border:1px solid rgba(200,240,0,0.2);border-radius:8px;padding:.4rem .7rem;text-align:center}
+.score-ia-rodada-val{font-family:"Bebas Neue",cursive;font-size:1.6rem;color:var(--accent);line-height:1}
+.score-ia-rodada-label{font-size:.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.score-stars{color:#ffd700;font-size:1rem;letter-spacing:2px;margin-top:.2rem}
+.score-ia-tag{font-size:.6rem;color:var(--muted);margin-top:.5rem;font-style:italic;border-top:1px solid var(--border);padding-top:.4rem}
+/* Gráfico */
+.grafico-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.9rem 1rem;margin-bottom:1rem}
+.grafico-title{font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.8rem}
+.grafico-wrap{position:relative;height:120px}
+.grafico-wrap canvas{width:100%!important;height:100%!important}
+/* Tabela histórico */
+.hist-table{width:100%;border-collapse:collapse;font-size:.75rem}
+.hist-table th{color:var(--muted);font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.35rem .5rem;text-align:left;border-bottom:1px solid var(--border)}
+.hist-table td{padding:.4rem .5rem;border-bottom:1px solid rgba(42,42,42,0.5);color:var(--text)}
+.hist-table tr:last-child td{border-bottom:none}
+.hist-pos{font-weight:800;font-size:.8rem}
+.hist-pos.p1{color:#4caf50}
+.hist-pos.p2{color:#ffc107}
+.hist-pos.p3{color:var(--muted)}
+.hist-pos.p4{color:#f44336}
+.hist-mov{font-size:.8rem}
+.hist-mov.up{color:#4caf50}
+.hist-mov.stay{color:var(--muted)}
+.hist-mov.down{color:#f44336}
+.score-pill{background:rgba(200,240,0,0.1);border:1px solid rgba(200,240,0,0.25);border-radius:4px;padding:.1rem .4rem;color:var(--accent);font-weight:700;font-size:.72rem}
+/* Botão perfil no ranking */
+.btn-perfil{background:none;border:none;color:rgba(200,240,0,0.4);font-size:.9rem;cursor:pointer;padding:.1rem .2rem;transition:color .15s;line-height:1;flex-shrink:0}
+.btn-perfil:hover{color:var(--accent)}
 </style>
 </head>
 <body>
@@ -240,6 +328,36 @@ footer{text-align:center;padding:1.8rem 0 2.5rem;color:#2e2e2e;font-size:.68rem;
     <div class="rodada-icon">🗓️</div>
     <div class="rodada-text"><strong id="rodadaTitle">Carregando...</strong></div>
   </div>
+  <!-- DESTAQUES DA RODADA -->
+  <div class="destaques-section" id="destacesSection">
+    <div class="destaques-title">
+      🏆 Destaques da Rodada
+      <button class="destaques-toggle" id="destacesToggle" onclick="toggleDestaques()">▼ Ver top 5</button>
+    </div>
+    <div class="destaques-grid" id="destacesGrid">
+      <div>
+        <div class="destaque-cat-label">🧑 Masculino</div>
+        <div id="destaqueMasc"></div>
+      </div>
+      <div>
+        <div class="destaque-cat-label">👩 Feminino</div>
+        <div id="destaqueFem"></div>
+      </div>
+    </div>
+    <div id="top5Section" class="hidden">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-top:.7rem">
+        <div>
+          <div class="destaque-cat-label" style="margin-top:.5rem">Top 5 Masculino</div>
+          <div class="top5-grid" id="top5Masc"></div>
+        </div>
+        <div>
+          <div class="destaque-cat-label" style="margin-top:.5rem">Top 5 Feminino</div>
+          <div class="top5-grid" id="top5Fem"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="nav-buttons" id="navButtons">
     <button class="nav-btn active-ranking" id="btn-ranking" onclick="switchView('ranking')">🏆 Classificação · ATUAL</button>
     <button class="nav-btn" id="btn-proxima" onclick="switchView('proxima')">Formação da Próxima Rodada</button>
@@ -320,6 +438,51 @@ footer{text-align:center;padding:1.8rem 0 2.5rem;color:#2e2e2e;font-size:.68rem;
   </div>
 </div>
 
+<!-- TELA DE PERFIL DO JOGADOR -->
+<div id="view-perfil" class="hidden">
+  <div class="perfil-screen">
+    <button class="perfil-back" onclick="closePerfil()">← Voltar ao Ranking</button>
+    <div class="perfil-hero">
+      <div id="perfilFotoWrap"></div>
+      <div class="perfil-hero-info">
+        <div class="perfil-nome" id="perfilNome">Jogador</div>
+        <div class="perfil-confronto" id="perfilConfrontoInfo"></div>
+        <div class="perfil-badges" id="perfilBadges"></div>
+      </div>
+    </div>
+    <!-- Score IA -->
+    <div class="score-ia-card">
+      <div class="score-ia-label">⚡ Padel Score</div>
+      <div class="score-ia-main">
+        <div>
+          <div class="score-ia-geral-label">Score Geral</div>
+          <div class="score-ia-geral" id="scoreGeral">-</div>
+          <div class="score-stars" id="scoreStars"></div>
+        </div>
+        <div class="score-ia-rodada-box">
+          <div class="score-ia-rodada-val" id="scoreRodada">-</div>
+          <div class="score-ia-rodada-label">Rodada Atual</div>
+        </div>
+      </div>
+      <div class="score-ia-tag">✨ Calculado com Inteligência Artificial · considera pontuação, posição, nível do confronto, consistência e tendência</div>
+    </div>
+    <!-- Gráfico -->
+    <div class="grafico-card">
+      <div class="grafico-title">📈 Evolução do Score por Rodada</div>
+      <div class="grafico-wrap"><canvas id="graficoScore"></canvas></div>
+    </div>
+    <!-- Histórico de rodadas -->
+    <div class="grafico-card">
+      <div class="grafico-title">📋 Histórico de Rodadas</div>
+      <table class="hist-table">
+        <thead><tr><th>Rodada</th><th>Confronto</th><th>Pontos</th><th>Posição</th><th>Score IA</th><th></th></tr></thead>
+        <tbody id="histTabela"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 var IS_ADMIN = window.location.search.indexOf('admin=pj2026') >= 0;
 var APPS_URL="https://script.google.com/macros/s/AKfycbzEJ2SPXBL8nrKxYMRdT6pcHKSc05Np-C6z6NNyhhibMpJB8Cdw2fDkeyb0T9QoBNg1/exec";
@@ -815,7 +978,9 @@ function processData(payload){
     var rows=parseCSV(csvText),data=buildData(rows);
     if(data.masc.length===0&&data.fem.length===0)throw new Error("Sem dados");
     DATA=data;
+    STATS = payload.stats || {};
     applyConfig(cfg);buildHistButtons(HISTORICO);
+    renderDestaques();
     renderR4(DATA.masc,"masc","");renderR4(DATA.fem,"fem","");
     var mH=DATA.masc.some(function(g){return g.players.some(function(p){return p.jogo4>0;});}),fH=DATA.fem.some(function(g){return g.players.some(function(p){return p.jogo4>0;});});
     renderR5(mH?computeNextRound(DATA.masc):DATA.next_masc,"panel-next-masc");
@@ -890,6 +1055,209 @@ function loadDispStatus() {
     });
   });
 }
+
+
+var STATS = {};
+
+// ── DESTAQUES ──────────────────────────────────────────────
+var top5Visible = false;
+
+function toggleDestaques() {
+  top5Visible = !top5Visible;
+  document.getElementById('top5Section').className = top5Visible ? '' : 'hidden';
+  document.getElementById('destacesToggle').textContent = top5Visible ? '▲ Fechar' : '▼ Ver top 5';
+}
+
+function renderDestaques() {
+  if (!STATS || Object.keys(STATS).length === 0) {
+    document.getElementById('destacesSection').className = 'destaques-section hidden';
+    return;
+  }
+  document.getElementById('destacesSection').className = 'destaques-section';
+
+  function sortByCat(cat) {
+    return Object.values(STATS)
+      .filter(function(s){ return s.cat===cat && s.scoreRodada>0; })
+      .sort(function(a,b){ return b.scoreRodada-a.scoreRodada; });
+  }
+
+  var topMasc = sortByCat('masc');
+  var topFem  = sortByCat('fem');
+
+  function renderTop1(s, isFem) {
+    if (!s) return '<p style="color:var(--muted);font-size:.75rem;padding:.5rem">Sem dados ainda</p>';
+    var catCls = isFem ? 'fem' : '';
+    var foto = s.foto
+      ? '<img class="destaque-foto '+catCls+'" src="'+esc(s.foto)+'" onerror="this.style.display='none'">'
+      : '<div class="destaque-foto-placeholder '+catCls+'">'+s.nome.charAt(0)+'</div>';
+    var scoreRd = isFem
+      ? '<span class="destaque-score-rodada fem">★ '+s.scoreRodada+'</span>'
+      : '<span class="destaque-score-rodada">★ '+s.scoreRodada+'</span>';
+    return '<div class="destaque-top '+catCls+'" onclick="openPerfil(''+esc(s.nome)+'')">'
+      +'<div class="destaque-top-inner">'+foto
+      +'<div class="destaque-info">'
+      +'<div class="destaque-nome">'+esc(s.nome)+'</div>'
+      +'<div class="destaque-scores">'
+      +'<span class="destaque-score-geral">Geral '+s.score+'</span>'
+      +scoreRd+'</div></div></div></div>';
+  }
+
+  document.getElementById('destaqueMasc').innerHTML = renderTop1(topMasc[0], false);
+  document.getElementById('destaqueFem').innerHTML  = renderTop1(topFem[0],  true);
+
+  function renderTop5(list, isFem) {
+    return list.slice(0,5).map(function(s,i){
+      var rankCls = i===0?'gold':i===1?'silver':i===2?'bronze':'';
+      var foto = s.foto
+        ? '<img class="top5-foto-mini" src="'+esc(s.foto)+'" onerror="this.style.display='none'">'
+        : '<div class="top5-foto-mini" style="display:flex;align-items:center;justify-content:center;font-size:.5rem;font-weight:900;color:var(--muted)">'+s.nome.charAt(0)+'</div>';
+      var scoreColor = isFem ? 'fem' : '';
+      return '<div class="top5-item" onclick="openPerfil(''+esc(s.nome)+'')">'
+        +'<span class="top5-rank '+rankCls+'">'+(i+1)+'</span>'
+        +foto
+        +'<span class="top5-nome">'+esc(s.nome)+'</span>'
+        +'<span class="top5-score '+scoreColor+'">'+s.scoreRodada+'</span>'
+        +'</div>';
+    }).join('');
+  }
+
+  document.getElementById('top5Masc').innerHTML = renderTop5(topMasc, false) || '<p style="color:var(--muted);font-size:.72rem;padding:.3rem">Sem dados</p>';
+  document.getElementById('top5Fem').innerHTML  = renderTop5(topFem,  true)  || '<p style="color:var(--muted);font-size:.72rem;padding:.3rem">Sem dados</p>';
+}
+
+// ── PERFIL DO JOGADOR ──────────────────────────────────────
+var perfilChart = null;
+
+function openPerfil(nome) {
+  var s = STATS[nome];
+  if (!s) return;
+  var isFem = s.cat === 'fem';
+
+  // Foto
+  var fotoWrap = document.getElementById('perfilFotoWrap');
+  if (s.foto) {
+    fotoWrap.innerHTML = '<img class="perfil-foto '+(isFem?'fem':'')+'" src="'+esc(s.foto)+'" onerror="this.outerHTML='<div class=\"perfil-foto-ph '+(isFem?'fem':'')+'\">'+s.nome.charAt(0)+'</div>'">';
+  } else {
+    fotoWrap.innerHTML = '<div class="perfil-foto-ph '+(isFem?'fem':'')+'">'+s.nome.charAt(0)+'</div>';
+  }
+
+  // Nome e confronto
+  document.getElementById('perfilNome').textContent = s.nome;
+  document.getElementById('perfilConfrontoInfo').textContent = 'Confronto '+s.confrontoAtual+' · '+s.rodadasJogadas+' rodada'+(s.rodadasJogadas!==1?'s':'');
+
+  // Badges
+  var badges = '';
+  if (s.vitorias > 0)   badges += '<span class="perfil-badge vitoria">🏆 '+s.vitorias+' vitória'+(s.vitorias>1?'s':'')+'</span>';
+  if (s.coroas > 0)     badges += '<span class="perfil-badge coroa">👑 '+s.coroas+' coroa'+(s.coroas>1?'s':'')+'</span>';
+  if (s.mediaPontos > 0) badges += '<span class="perfil-badge media">📊 Média '+s.mediaPontos+'pts</span>';
+  if (s.melhorPontos > 0) badges += '<span class="perfil-badge melhor">⚡ Melhor '+s.melhorPontos+'pts</span>';
+  document.getElementById('perfilBadges').innerHTML = badges;
+
+  // Score IA
+  document.getElementById('scoreGeral').textContent = s.score > 0 ? s.score : '-';
+  document.getElementById('scoreRodada').textContent = s.scoreRodada > 0 ? s.scoreRodada : '-';
+  var stars = '';
+  var starCount = Math.round(s.score / 2);
+  for (var i=0;i<5;i++) stars += i < starCount ? '★' : '☆';
+  document.getElementById('scoreStars').textContent = stars;
+
+  // Gráfico
+  renderGrafico(s.scoreRodadas);
+
+  // Tabela histórico
+  renderHistTabela(s);
+
+  // Mostra tela
+  document.getElementById('view-perfil').className = '';
+  window.scrollTo(0,0);
+}
+
+function closePerfil() {
+  document.getElementById('view-perfil').className = 'hidden';
+  if (perfilChart) { perfilChart.destroy(); perfilChart = null; }
+}
+
+function renderGrafico(scoreRodadas) {
+  var ctx = document.getElementById('graficoScore').getContext('2d');
+  if (perfilChart) { perfilChart.destroy(); perfilChart = null; }
+  if (!scoreRodadas || scoreRodadas.length === 0) return;
+
+  var labels = scoreRodadas.map(function(s){ return s.jogo.replace('2026 ',''); });
+  var values = scoreRodadas.map(function(s){ return s.total; });
+
+  perfilChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Padel Score',
+        data: values,
+        borderColor: '#c8f000',
+        backgroundColor: 'rgba(200,240,0,0.08)',
+        pointBackgroundColor: '#c8f000',
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        tension: 0.3,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1e1e1e',
+          borderColor: '#2a2a2a',
+          borderWidth: 1,
+          titleColor: '#c8f000',
+          bodyColor: '#f0f2f5'
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { color: '#6b7280', font: { size: 10 } }
+        },
+        y: {
+          min: 0, max: 10,
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { color: '#6b7280', font: { size: 10 }, stepSize: 2 }
+        }
+      }
+    }
+  });
+}
+
+function renderHistTabela(s) {
+  var tbody = document.getElementById('histTabela');
+  if (!s.scoreRodadas || s.scoreRodadas.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);text-align:center">Sem histórico</td></tr>';
+    return;
+  }
+  var rows = s.scoreRodadas.slice().reverse().map(function(sr, idx) {
+    var jogo = sr.jogo.replace('2026 ','');
+    var posCls = ['p1','p2','p3','p4'][sr.posicao-1]||'p4';
+    var posLabel = ['1º ↑','2º →','3º →','4º ↓'][sr.posicao-1]||sr.posicao+'º';
+    var prev = s.scoreRodadas[s.scoreRodadas.length-2-idx];
+    var movCls = 'stay', movLabel = '→';
+    if (prev) {
+      if (sr.total > prev.total) { movCls='up'; movLabel='↑'; }
+      else if (sr.total < prev.total) { movCls='down'; movLabel='↓'; }
+    }
+    var coroa = sr.temCoroa ? ' 👑' : '';
+    return '<tr>'
+      +'<td>'+esc(jogo)+'</td>'
+      +'<td>C'+sr.confrontoNum+'</td>'
+      +'<td><strong>'+sr.pontos+'</strong>'+coroa+'</td>'
+      +'<td><span class="hist-pos '+posCls+'">'+posLabel+'</span></td>'
+      +'<td><span class="score-pill">'+sr.total+'</span></td>'
+      +'<td><span class="hist-mov '+movCls+'">'+movLabel+'</span></td>'
+      +'</tr>';
+  }).join('');
+  tbody.innerHTML = rows;
+}
+
 
 fetchData();setInterval(fetchData,5*60*1000);
 </script>
