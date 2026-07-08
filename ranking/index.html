@@ -1203,131 +1203,27 @@ function openPerfil(nome) {
 
   // Foto
   var fotoWrap = document.getElementById('perfilFotoWrap');
-  if (s.foto) {
-    fotoWrap.innerHTML = '<img class="perfil-foto '+(isFem?'fem':'')+'" src="'+esc(s.foto)+'" onerror="this.outerHTML='<div class=\"perfil-foto-ph '+(isFem?'fem':'')+'\">'+s.nome.charAt(0)+'</div>'">';
-  } else {
-    fotoWrap.innerHTML = '<div class="perfil-foto-ph '+(isFem?'fem':'')+'">'+s.nome.charAt(0)+'</div>';
-  }
-
-  // Nome e confronto
-  document.getElementById('perfilNome').textContent = s.nome;
-  document.getElementById('perfilConfrontoInfo').textContent = 'Confronto '+s.confrontoAtual+' · '+s.rodadasJogadas+' rodada'+(s.rodadasJogadas!==1?'s':'');
-
-  // Badges
-  var badges = '';
-  if (s.vitorias > 0)   badges += '<span class="perfil-badge vitoria">🏆 '+s.vitorias+' vitória'+(s.vitorias>1?'s':'')+'</span>';
-  if (s.coroas > 0)     badges += '<span class="perfil-badge coroa">👑 '+s.coroas+' coroa'+(s.coroas>1?'s':'')+'</span>';
-  if (s.mediaPontos > 0) badges += '<span class="perfil-badge media">📊 Média '+s.mediaPontos+'pts</span>';
-  if (s.melhorPontos > 0) badges += '<span class="perfil-badge melhor">⚡ Melhor '+s.melhorPontos+'pts</span>';
-  document.getElementById('perfilBadges').innerHTML = badges;
-
-  // Score IA
-  document.getElementById('scoreGeral').textContent = s.score > 0 ? s.score : '-';
-  document.getElementById('scoreRodada').textContent = s.scoreRodada > 0 ? s.scoreRodada : '-';
-  var stars = '';
-  var starCount = Math.round(s.score / 2);
-  for (var i=0;i<5;i++) stars += i < starCount ? '★' : '☆';
-  document.getElementById('scoreStars').textContent = stars;
-
-  // Gráfico
-  renderGrafico(s.scoreRodadas);
-
-  // Tabela histórico
-  renderHistTabela(s);
-
-  // Mostra tela
-  document.getElementById('view-perfil').className = '';
-  window.scrollTo(0,0);
-}
-
-function closePerfil() {
-  document.getElementById('view-perfil').className = 'hidden';
-  if (perfilChart) { perfilChart.destroy(); perfilChart = null; }
-}
-
-function renderGrafico(scoreRodadas) {
-  var ctx = document.getElementById('graficoScore').getContext('2d');
-  if (perfilChart) { perfilChart.destroy(); perfilChart = null; }
-  if (!scoreRodadas || scoreRodadas.length === 0) return;
-
-  var labels = scoreRodadas.map(function(s){ return s.jogo.replace('2026 ',''); });
-  var values = scoreRodadas.map(function(s){ return s.total; });
-
-  perfilChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: 'Padel Score',
-        data: values,
-        borderColor: '#c8f000',
-        backgroundColor: 'rgba(200,240,0,0.08)',
-        pointBackgroundColor: '#c8f000',
-        pointRadius: 5,
-        pointHoverRadius: 7,
-        tension: 0.3,
-        fill: true
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: '#1e1e1e',
-          borderColor: '#2a2a2a',
-          borderWidth: 1,
-          titleColor: '#c8f000',
-          bodyColor: '#f0f2f5'
-        }
-      },
-      scales: {
-        x: {
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { color: '#6b7280', font: { size: 10 } }
-        },
-        y: {
-          min: 0, max: 10,
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { color: '#6b7280', font: { size: 10 }, stepSize: 2 }
-        }
-      }
+  fotoWrap.innerHTML = '';
+  (function() {
+    var catCls = 'perfil-foto' + (isFem ? ' fem' : '');
+    var phCls  = 'perfil-foto-ph' + (isFem ? ' fem' : '');
+    if (s.foto) {
+      var imgEl = document.createElement('img');
+      imgEl.className = catCls;
+      imgEl.src = s.foto;
+      imgEl.onerror = function() {
+        var ph = document.createElement('div');
+        ph.className = phCls;
+        ph.textContent = s.nome.charAt(0);
+        fotoWrap.innerHTML = '';
+        fotoWrap.appendChild(ph);
+      };
+      fotoWrap.appendChild(imgEl);
+    } else {
+      var ph = document.createElement('div');
+      ph.className = phCls;
+      ph.textContent = s.nome.charAt(0);
+      fotoWrap.appendChild(ph);
     }
-  });
-}
+  })();
 
-function renderHistTabela(s) {
-  var tbody = document.getElementById('histTabela');
-  if (!s.scoreRodadas || s.scoreRodadas.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);text-align:center">Sem histórico</td></tr>';
-    return;
-  }
-  var rows = s.scoreRodadas.slice().reverse().map(function(sr, idx) {
-    var jogo = sr.jogo.replace('2026 ','');
-    var posCls = ['p1','p2','p3','p4'][sr.posicao-1]||'p4';
-    var posLabel = ['1º ↑','2º →','3º →','4º ↓'][sr.posicao-1]||sr.posicao+'º';
-    var prev = s.scoreRodadas[s.scoreRodadas.length-2-idx];
-    var movCls = 'stay', movLabel = '→';
-    if (prev) {
-      if (sr.total > prev.total) { movCls='up'; movLabel='↑'; }
-      else if (sr.total < prev.total) { movCls='down'; movLabel='↓'; }
-    }
-    var coroa = sr.temCoroa ? ' 👑' : '';
-    return '<tr>'
-      +'<td>'+esc(jogo)+'</td>'
-      +'<td>C'+sr.confrontoNum+'</td>'
-      +'<td><strong>'+sr.pontos+'</strong>'+coroa+'</td>'
-      +'<td><span class="hist-pos '+posCls+'">'+posLabel+'</span></td>'
-      +'<td><span class="score-pill">'+sr.total+'</span></td>'
-      +'<td><span class="hist-mov '+movCls+'">'+movLabel+'</span></td>'
-      +'</tr>';
-  }).join('');
-  tbody.innerHTML = rows;
-}
-
-
-fetchData();setInterval(fetchData,5*60*1000);
-</script>
-</body>
-</html>
