@@ -109,10 +109,12 @@ footer{text-align:center;padding:1.8rem 0 2.5rem;color:#2e2e2e;font-size:.68rem;
 .btn-agendar{background:none;border:1px solid rgba(0,230,118,0.3);border-radius:6px;color:rgba(0,230,118,0.6);font-family:"Outfit",sans-serif;font-size:.62rem;font-weight:700;padding:.2rem .5rem;cursor:pointer;transition:all .2s;letter-spacing:.04em;white-space:nowrap;flex-shrink:0}
 .btn-agendar:hover{border-color:var(--match);color:var(--match);background:rgba(0,230,118,0.08)}
 .match-badge{display:inline-flex;align-items:center;gap:3px;font-size:.6rem;font-weight:700;color:var(--match);background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.25);border-radius:4px;padding:.15rem .4rem;flex-shrink:0}
-.player-dots{display:flex;gap:3px;align-items:center;flex-shrink:0}
-.player-dot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:900;color:#000;border:2px solid transparent;transition:all .2s;flex-shrink:0}
-.player-dot.pending{background:var(--surface2);border-color:#333;color:#555}
-.player-dot.done{border-color:transparent}
+.disp-group{display:inline-flex;align-items:center;gap:0;border:1px solid rgba(0,230,118,0.3);border-radius:6px;overflow:hidden;flex-shrink:0}
+.disp-group .btn-agendar{border:none;border-radius:0;border-right:1px solid rgba(0,230,118,0.2)}
+.player-dots{display:flex;align-items:center;gap:3px;padding:.2rem .45rem;background:none}
+.player-dot{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.48rem;font-weight:900;transition:all .2s;flex-shrink:0}
+.player-dot.pending{background:#222;color:#444;border:1px solid #333}
+.player-dot.done{color:#000;border:1px solid transparent}
 /* TELA AGENDA */
 #view-agenda{position:fixed;inset:0;background:var(--bg);z-index:100;overflow-y:auto}
 .agenda-screen{max-width:660px;margin:0 auto;padding:1.2rem}
@@ -394,8 +396,10 @@ function renderR4(groups,cat,filter){
     if(isWO)html+='<span class="wo-badge">WO</span>';
     else if(agInfo)html+='<span class="agenda-info">'+agInfo+"</span>";
     html+='<span class="agenda-status"><span class="agenda-dot '+dotClass+'"></span><span class="agenda-label '+dotClass+'">'+statusLabel+"</span></span>";
-    // Bolinhas de status por jogador
+    // Bolinhas + botão num único bloco compacto
     var dotStatus=DISP_STATUS[agKey]||[];
+    html+='<div class="disp-group">';
+    if(IS_ADMIN)html+='<button class="btn-agendar" style="border:none" onclick=\'openAgenda('+btnInfo.replace(/'/g,"&#39;")+")'>\uD83D\uDCC5 Disponibilidade</button>";
     if(dotStatus.length>0){
       html+='<div class="player-dots">';
       dotStatus.forEach(function(ps){
@@ -405,7 +409,7 @@ function renderR4(groups,cat,filter){
       });
       html+='</div>';
     }
-    if(IS_ADMIN)html+='<button class="btn-agendar" onclick=\'openAgenda('+btnInfo.replace(/'/g,"&#39;")+")'>\uD83D\uDCC5 Disponibilidade</button>";
+    html+='</div>';
     html+="</div>";
     html+='<div class="col-headers"><div class="col-h"></div><div class="col-h">Jogador</div><div class="col-h right">Rodada</div><div class="col-h right">Soma</div></div>';
     var ranked=g.players.slice().sort(function(a,b){return b.jogo4!==a.jogo4?b.jogo4-a.jogo4:b.soma-a.soma;});
