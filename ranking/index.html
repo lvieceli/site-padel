@@ -562,20 +562,22 @@ function renderR4(groups,cat,filter){
     html+='<span class="agenda-status"><span class="agenda-dot '+dotClass+'"></span><span class="agenda-label '+dotClass+'">'+statusLabel+"</span></span>";
     // Bolinhas + botão num único bloco compacto
     var dotStatus=DISP_STATUS[agKey]||[];
-    html+='<div class="disp-group">';
-    if(IS_ADMIN)html+='<button class="btn-agendar" style="border:none" onclick=\'openAgenda('+btnInfo.replace(/'/g,"&#39;")+")'>\uD83D\uDCC5 Disponibilidade</button>";
-    if(dotStatus.length>0){
-      html+='<div class="player-dots">';
-      dotStatus.forEach(function(ps){
-        var color=PLAYER_COLORS[ps.idx]||'#555';
-        var initial=ps.initial||(ps.name.charAt(0));
-        if(ps.done){
-          html+='<div class="player-dot done" style="border-color:'+color+';color:'+color+'" title="'+esc(ps.name)+' - Respondeu">'+initial+'</div>';
-        } else {
-          html+='<div class="player-dot pending" title="'+esc(ps.name)+' - Pendente">'+initial+'</div>';
-        }
-      });
-      html+='</div>';
+    if(IS_ADMIN){
+      html+='<div class="disp-group">';
+      if(IS_ADMIN)html+='<button class="btn-agendar" style="border:none" onclick=\'openAgenda('+btnInfo.replace(/'/g,"&#39;")+")'>\uD83D\uDCC5 Disponibilidade</button>";
+      if(dotStatus.length>0){
+        html+='<div class="player-dots">';
+        dotStatus.forEach(function(ps){
+            var color=PLAYER_COLORS[ps.idx]||'#555';
+            var initial=ps.initial||(ps.name.charAt(0));
+            if(ps.done){
+              html+='<div class="player-dot done" style="border-color:'+color+';color:'+color+'" title="'+esc(ps.name)+' - Respondeu">'+initial+'</div>';
+            } else {
+              html+='<div class="player-dot pending" title="'+esc(ps.name)+' - Pendente">'+initial+'</div>';
+            }
+        });
+        html+='</div>';
+    }
     }
     html+='</div>';
     html+="</div>";
