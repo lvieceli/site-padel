@@ -505,28 +505,32 @@ function renderCal(){
     html+='<div class="cal-day">';
     html+='<div class="cal-day-header">';
     html+='<span class="cal-day-label'+(fds?' weekend':'')+'">'+(fds?'<strong>':'')+fmtD(d)+(fds?'</strong>':'')+'</span>';
-    html+='<button class="btn-toggle-all'+(todosAtivos?' active':'')+'" onclick="toggleAll(\''+k+'\','+JSON.stringify(perds)+')">'+(todosAtivos?'✓ Todos':'Todos')+'</button>';
+    html+='<button class="btn-toggle-all'+(todosAtivos?' active':'')+'" data-dk="'+k+'" data-perds="'+perds.join(',')+'" onclick="toggleAllBtn(this)">'+(todosAtivos?'✓ Todos':'Todos')+'</button>';
     html+='</div>';
     html+='<div class="cal-periods">';
     perds.forEach(function(per){
       var active=sel.indexOf(per)>=0;
-      html+='<button class="period-btn'+(active?' active':'')+'" onclick="togglePer(\''+k+'\',\''+per+'\'">'+per+'</button>';
+      html+='<button class="period-btn'+(active?' active':'')+'" data-dk="'+k+'" data-per="'+per+'" onclick="togglePerBtn(this)">'+per+'</button>';
     });
     html+='</div></div>';
   });
   document.getElementById("calGrid").innerHTML=html;
 }
-function toggleAll(k,perds){
+function toggleAllBtn(btn){
+  var k=btn.getAttribute('data-dk');
+  var perds=btn.getAttribute('data-perds').split(',');
   var p=AG.players[AG.selIdx];
   if(!AG.disps[p.name])AG.disps[p.name]={};
   var sel=AG.disps[p.name][k]||[];
   var todosAtivos=perds.every(function(per){return sel.indexOf(per)>=0;});
-  if(todosAtivos){
-    delete AG.disps[p.name][k];
-  } else {
-    AG.disps[p.name][k]=perds.slice();
-  }
+  if(todosAtivos){delete AG.disps[p.name][k];}
+  else{AG.disps[p.name][k]=perds.slice();}
   renderCal();renderCruz();
+}
+function togglePerBtn(btn){
+  var k=btn.getAttribute('data-dk');
+  var per=btn.getAttribute('data-per');
+  togglePer(k,per);
 }
 function togglePer(k,per){
   var p=AG.players[AG.selIdx];
