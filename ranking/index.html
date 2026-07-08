@@ -189,6 +189,17 @@ footer{text-align:center;padding:1.8rem 0 2.5rem;color:#2e2e2e;font-size:.68rem;
 .cruz-avatars{display:flex;gap:2px;justify-content:center;flex-wrap:wrap;margin-top:.15rem}
 .cruz-av{width:11px;height:11px;border-radius:50%;font-size:.38rem;display:flex;align-items:center;justify-content:center;font-weight:900;color:#000;flex-shrink:0}
 .cruz-all{font-size:.55rem;color:var(--match);margin-top:.15rem}
+.match-summary{background:rgba(0,230,118,0.06);border:1px solid rgba(0,230,118,0.2);border-radius:10px;padding:.8rem 1rem;margin-bottom:1rem}
+.match-summary-title{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--match);margin-bottom:.6rem;display:flex;align-items:center;gap:.4rem}
+.match-summary-list{display:flex;flex-direction:column;gap:.3rem}
+.match-item{display:flex;align-items:center;gap:.6rem;padding:.35rem .5rem;background:rgba(0,230,118,0.08);border:1px solid rgba(0,230,118,0.2);border-radius:7px}
+.match-item-day{font-size:.76rem;font-weight:700;color:var(--text);min-width:80px}
+.match-item-periods{display:flex;gap:.3rem;flex-wrap:wrap}
+.match-item-period{font-size:.62rem;font-weight:700;padding:.15rem .45rem;border-radius:4px;border:1px solid}
+.match-item-period.manha{background:rgba(96,184,240,0.15);border-color:rgba(96,184,240,0.4);color:#60b8f0}
+.match-item-period.tarde{background:rgba(240,192,64,0.15);border-color:rgba(240,192,64,0.4);color:#f0c040}
+.match-item-period.noite{background:rgba(200,100,240,0.15);border-color:rgba(200,100,240,0.4);color:#c864f0}
+.no-match{text-align:center;font-size:.76rem;color:var(--muted);padding:.6rem}
 /* Legenda */
 .legend{display:flex;gap:.8rem;margin-top:.6rem;margin-bottom:1rem;flex-wrap:wrap}
 .legend-item{display:flex;align-items:center;gap:.3rem;font-size:.65rem;color:var(--muted)}
@@ -658,7 +669,35 @@ function renderCruz(){
   var mc=document.getElementById("matchCount");
   if(totalM>0){mc.textContent=totalM+' match'+(totalM>1?'es':'');mc.className="match-count";}
   else{mc.className="match-count hidden";}
-  document.getElementById("cruzGrid").innerHTML=html||'<div class="cruz-empty">Nenhuma disponibilidade marcada ainda.<br>Selecione seu nome e marque seus períodos.</div>';
+
+  // Gera resumo dos matches
+  var resumoHtml='';
+  if(totalM>0){
+    resumoHtml+='<div class="match-summary">';
+    resumoHtml+='<div class="match-summary-title">✅ Dias com match completo</div>';
+    resumoHtml+='<div class="match-summary-list">';
+    datas.forEach(function(dt){
+      var k=dk(dt),perds=periodos(dt),matchPerds=[];
+      perds.forEach(function(per){
+        var quem=[];
+        pls.forEach(function(p){var pd2=(d[p.name]||{})[k]||[];if(pd2.indexOf(per)>=0)quem.push(1);});
+        if(quem.length===pls.length&&pls.length>=2)matchPerds.push(per);
+      });
+      if(matchPerds.length>0){
+        resumoHtml+='<div class="match-item">';
+        resumoHtml+='<div class="match-item-day">'+fmtD(dt).replace(', ',' <span style="color:var(--muted);font-weight:400;font-size:.65rem">').replace('Jul','Jul</span>')+'</div>';
+        resumoHtml+='<div class="match-item-periods">';
+        matchPerds.forEach(function(per){
+          var pc=per==='Manhã'?'manha':(per==='Tarde'?'tarde':'noite');
+          resumoHtml+='<span class="match-item-period '+pc+'">'+per+'</span>';
+        });
+        resumoHtml+='</div></div>';
+      }
+    });
+    resumoHtml+='</div></div>';
+  }
+
+  document.getElementById("cruzGrid").innerHTML=resumoHtml+html||'<div class="cruz-empty">Nenhuma disponibilidade marcada ainda.<br>Selecione seu nome e marque seus períodos.</div>';
 }
 
 // ── COMPUTE NEXT ROUND ──
