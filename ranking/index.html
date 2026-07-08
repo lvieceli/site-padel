@@ -109,6 +109,10 @@ footer{text-align:center;padding:1.8rem 0 2.5rem;color:#2e2e2e;font-size:.68rem;
 .btn-agendar{background:none;border:1px solid rgba(0,230,118,0.3);border-radius:6px;color:rgba(0,230,118,0.6);font-family:"Outfit",sans-serif;font-size:.62rem;font-weight:700;padding:.2rem .5rem;cursor:pointer;transition:all .2s;letter-spacing:.04em;white-space:nowrap;flex-shrink:0}
 .btn-agendar:hover{border-color:var(--match);color:var(--match);background:rgba(0,230,118,0.08)}
 .match-badge{display:inline-flex;align-items:center;gap:3px;font-size:.6rem;font-weight:700;color:var(--match);background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.25);border-radius:4px;padding:.15rem .4rem;flex-shrink:0}
+.player-dots{display:flex;gap:3px;align-items:center;flex-shrink:0}
+.player-dot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:900;color:#000;border:2px solid transparent;transition:all .2s;flex-shrink:0}
+.player-dot.pending{background:var(--surface2);border-color:#333;color:#555}
+.player-dot.done{border-color:transparent}
 /* TELA AGENDA */
 #view-agenda{position:fixed;inset:0;background:var(--bg);z-index:100;overflow-y:auto}
 .agenda-screen{max-width:660px;margin:0 auto;padding:1.2rem}
@@ -369,6 +373,7 @@ function buildData(rows){
 
 // ── RENDER RANKING ──
 function renderR4(groups,cat,filter){
+  loadDispStatus();
   var panel=document.getElementById("panel-"+cat);
   var isFem=(cat==="fem"),q=(filter||"").toLowerCase(),html="";
   for(var i=0;i<groups.length;i++){
@@ -389,7 +394,18 @@ function renderR4(groups,cat,filter){
     if(isWO)html+='<span class="wo-badge">WO</span>';
     else if(agInfo)html+='<span class="agenda-info">'+agInfo+"</span>";
     html+='<span class="agenda-status"><span class="agenda-dot '+dotClass+'"></span><span class="agenda-label '+dotClass+'">'+statusLabel+"</span></span>";
-    html+='<button class="btn-agendar" onclick=\'openAgenda('+btnInfo.replace(/'/g,"&#39;")+")'>\uD83D\uDCC5 Disponibilidade</button>";
+    // Bolinhas de status por jogador
+    var dotStatus=DISP_STATUS[agKey]||[];
+    if(dotStatus.length>0){
+      html+='<div class="player-dots">';
+      dotStatus.forEach(function(ps){
+        var color=PLAYER_COLORS[ps.idx]||'#555';
+        if(ps.done){html+='<div class="player-dot done" style="background:'+color+'" title="'+esc(ps.name)+' - Respondeu">'+ps.name.charAt(0)+'</div>';}
+        else{html+='<div class="player-dot pending" title="'+esc(ps.name)+' - Pendente">'+ps.name.charAt(0)+'</div>';}
+      });
+      html+='</div>';
+    }
+    if(IS_ADMIN)html+='<button class="btn-agendar" onclick=\'openAgenda('+btnInfo.replace(/'/g,"&#39;")+")'>\uD83D\uDCC5 Disponibilidade</button>";
     html+="</div>";
     html+='<div class="col-headers"><div class="col-h"></div><div class="col-h">Jogador</div><div class="col-h right">Rodada</div><div class="col-h right">Soma</div></div>';
     var ranked=g.players.slice().sort(function(a,b){return b.jogo4!==a.jogo4?b.jogo4-a.jogo4:b.soma-a.soma;});
@@ -504,6 +520,7 @@ async function openAgenda(info){
 }
 function closeAgenda(){
   document.getElementById("view-agenda").className="hidden";
+  loadDispStatus();
   renderR4(DATA.masc,"masc","");renderR4(DATA.fem,"fem","");
 }
 function renderPlayerSel(){
@@ -636,6 +653,7 @@ async function salvarDisp(){
   msg.className="save-msg show "+(ok?"ok":"err");
   setTimeout(function(){msg.className="save-msg";},2500);
   renderPlayerSel();
+  loadDispStatus();
 }
 function limparDisp(){
   var p=AG.players[AG.selIdx];if(!p)return;
@@ -811,6 +829,26 @@ function fetchData(){
   window._cb=function(payload){clearTimeout(window._jsonpTimeout);processData(payload);};
   var script=document.createElement("script");script.id="jsonp-script";script.src=APPS_URL+"?callback=_cb&t="+Date.now();document.head.appendChild(script);
 }
+// Cache de status de disponibilidade por confronto
+var DISP_STATUS = {};
+
+// Carrega status de disponibilidade de todos os confrontos visíveis
+function loadDispStatus() {
+  var allGroups = DATA.masc.concat(DATA.fem);
+  allGroups.forEach(function(g) {
+    var isFem = DATA.fem.indexOf(g) >= 0;
+    var agKey = (isFem?'fem':'masc') + '_' + g.confrontoNum;
+    var saved = null;
+    try { saved = localStorage.getItem('ag_'+agKey); } catch(e){}
+    var disps = saved ? JSON.parse(saved) : {};
+    var players = g.players.filter(function(p){ return p.name && p.name.toUpperCase()!=='ABERTO'; });
+    DISP_STATUS[agKey] = players.map(function(p, idx) {
+      var hasData = disps[p.name] && Object.keys(disps[p.name]).length > 0;
+      return { name: p.name, idx: idx, done: hasData };
+    });
+  });
+}
+
 fetchData();setInterval(fetchData,5*60*1000);
 </script>
 </body>
