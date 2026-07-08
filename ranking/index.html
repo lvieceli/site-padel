@@ -112,9 +112,9 @@ footer{text-align:center;padding:1.8rem 0 2.5rem;color:#2e2e2e;font-size:.68rem;
 .disp-group{display:inline-flex;align-items:center;gap:0;border:1px solid rgba(0,230,118,0.3);border-radius:6px;overflow:hidden;flex-shrink:0}
 .disp-group .btn-agendar{border:none;border-radius:0;border-right:1px solid rgba(0,230,118,0.2)}
 .player-dots{display:flex;align-items:center;gap:3px;padding:.2rem .45rem;background:none}
-.player-dot{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.48rem;font-weight:900;transition:all .2s;flex-shrink:0}
-.player-dot.pending{background:#222;color:#444;border:1px solid #333}
-.player-dot.done{color:#000;border:1px solid transparent}
+.player-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.52rem;font-weight:900;transition:all .2s;flex-shrink:0;letter-spacing:-.5px}
+.player-dot.pending{background:#111;color:#444;border:2px solid #2a2a2a}
+.player-dot.done{background:#0a0a0a;border-width:2px;border-style:solid}
 /* TELA AGENDA */
 #view-agenda{position:fixed;inset:0;background:var(--bg);z-index:100;overflow-y:auto}
 .agenda-screen{max-width:660px;margin:0 auto;padding:1.2rem}
@@ -404,8 +404,12 @@ function renderR4(groups,cat,filter){
       html+='<div class="player-dots">';
       dotStatus.forEach(function(ps){
         var color=PLAYER_COLORS[ps.idx]||'#555';
-        if(ps.done){html+='<div class="player-dot done" style="background:'+color+'" title="'+esc(ps.name)+' - Respondeu">'+ps.name.charAt(0)+'</div>';}
-        else{html+='<div class="player-dot pending" title="'+esc(ps.name)+' - Pendente">'+ps.name.charAt(0)+'</div>';}
+        var initial=ps.initial||(ps.name.charAt(0));
+        if(ps.done){
+          html+='<div class="player-dot done" style="border-color:'+color+';color:'+color+'" title="'+esc(ps.name)+' - Respondeu">'+initial+'</div>';
+        } else {
+          html+='<div class="player-dot pending" title="'+esc(ps.name)+' - Pendente">'+initial+'</div>';
+        }
       });
       html+='</div>';
     }
@@ -529,10 +533,11 @@ function closeAgenda(){
 }
 function renderPlayerSel(){
   var html="";
+  var selInitials = getInitials2(AG.players);
   AG.players.forEach(function(p,idx){
     var d=AG.disps[p.name]||{},tot=0;
     Object.values(d).forEach(function(a){tot+=a.length;});
-    var hasd=tot>0,initial=p.name.charAt(0).toUpperCase();
+    var hasd=tot>0,initial=selInitials[idx]||p.name.charAt(0).toUpperCase();
     html+='<div class="player-card'+(hasd?" responded":"")+(idx===AG.selIdx?" selected":"")+"\" onclick=\"selectPlayer("+idx+')"><div class="check-badge"'+(hasd?"":' style="display:none"')+">✓</div>";
     html+='<div class="player-avatar" style="border-color:'+PLAYER_COLORS[idx]+'">'+initial+"</div>";
     html+='<div class="player-card-name">'+esc(p.name)+"</div>";
@@ -837,6 +842,38 @@ function fetchData(){
 var DISP_STATUS = {};
 
 // Carrega status de disponibilidade de todos os confrontos visíveis
+function getInitials(players, idx) {
+  var name = players[idx].name || '';
+  var parts = name.trim().split(' ');
+  var first2 = (parts[0] || '').substring(0, 2).toUpperCase();
+  // Verifica se há colisão com outro jogador
+  for (var i = 0; i < players.length; i++) {
+    if (i === idx) continue;
+    var other = (players[i].name || '').trim().split(' ')[0] || '';
+    var other2 = other.substring(0, 2).toUpperCase();
+    if (other2 === first2) {
+      // Há colisão — usa 2 letras mesmo (já diferenciadas pelo prefixo)
+      return first2;
+    }
+  }
+  // Sem colisão — usa só 1 letra
+  return first2.charAt(0);
+}
+
+function getInitials2(players) {
+  // Gera iniciais únicas para todos os jogadores
+  var initials = players.map(function(p) {
+    return (p.name||'').trim().split(' ')[0].substring(0,2).toUpperCase();
+  });
+  return players.map(function(p, i) {
+    var init2 = initials[i];
+    var init1 = init2.charAt(0);
+    // Conta quantos têm a mesma primeira letra
+    var sameFirst = initials.filter(function(x){ return x.charAt(0)===init1; }).length;
+    return sameFirst > 1 ? init2 : init1;
+  });
+}
+
 function loadDispStatus() {
   var allGroups = DATA.masc.concat(DATA.fem);
   allGroups.forEach(function(g) {
@@ -846,9 +883,10 @@ function loadDispStatus() {
     try { saved = localStorage.getItem('ag_'+agKey); } catch(e){}
     var disps = saved ? JSON.parse(saved) : {};
     var players = g.players.filter(function(p){ return p.name && p.name.toUpperCase()!=='ABERTO'; });
+    var initials = getInitials2(players);
     DISP_STATUS[agKey] = players.map(function(p, idx) {
       var hasData = disps[p.name] && Object.keys(disps[p.name]).length > 0;
-      return { name: p.name, idx: idx, done: hasData };
+      return { name: p.name, idx: idx, done: hasData, initial: initials[idx] };
     });
   });
 }
