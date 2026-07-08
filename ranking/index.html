@@ -1071,111 +1071,121 @@ function calcularStatsLocal(historico) {
   var jogoKeys = Object.keys(historico).sort(function(a,b){
     return parseInt(a.replace(/\D/g,''))-parseInt(b.replace(/\D/g,''));
   });
-  var totalJogos = jogoKeys.length;
   var jogadores = {};
 
-  // Coleta todos os jogadores e seus dados por rodada
   jogoKeys.forEach(function(jogo) {
     var hd = historico[jogo];
     ['masc','fem'].forEach(function(cat) {
       (hd[cat]||[]).forEach(function(g) {
         var totalConfrontos = (hd[cat]||[]).length;
+        var isWO = g.wo === true;
+
+        // Detecta ausências: soma < 270 e empate no menor pontuador
+        var jogComPts = g.players.filter(function(p){ return p.jogo > 0; });
+        var somaConfronto = jogComPts.reduce(function(a,p){ return a + p.jogo; }, 0);
+        var ausentes = {};
+        if (!isWO && somaConfronto > 0 && somaConfronto < 270 && jogComPts.length > 0) {
+          var menorPts = Math.min.apply(null, jogComPts.map(function(p){ return p.jogo; }));
+          var countMenor = jogComPts.filter(function(p){ return p.jogo === menorPts; }).length;
+          // Empate no menor = ausentes (podem ser 1, 2 ou 3)
+          jogComPts.forEach(function(p) {
+            if (p.jogo === menorPts) {
+              ausentes[cleanNome(p.nome)] = true;
+            }
+          });
+        }
+
         g.players.forEach(function(p) {
           var nome = cleanNome(p.nome);
-          if (!nome || !p.jogo || p.jogo===0) return;
+          if (!nome || !p.jogo || p.jogo === 0) return;
           if (!jogadores[nome]) jogadores[nome] = {cat:cat, nomeOriginal:p.nome, rodadas:[]};
 
-          // Posição no confronto
-          var jogComPts = g.players.filter(function(x){return x.jogo>0;});
-          var sorted = jogComPts.slice().sort(function(a,b){return b.jogo-a.jogo;});
+          var jogComPts2 = g.players.filter(function(x){return x.jogo>0;});
+          var sorted = jogComPts2.slice().sort(function(a,b){return b.jogo-a.jogo;});
           var posicao = 4;
           for (var pi=0;pi<sorted.length;pi++){
             if(cleanNome(sorted[pi].nome)===nome){posicao=pi+1;break;}
           }
-          var temCoroa = (p.nome||'').indexOf('\uD83D\uDC51')>=0;
+          var temCoroa = (p.nome||'').indexOf('\uD83D\uDC51') >= 0;
+          var ausente = ausentes[nome] === true;
 
           jogadores[nome].rodadas.push({
             jogo:jogo, pontos:p.jogo, soma:p.soma||0,
             posicao:posicao, confrontoNum:g.numero||g.confrontoNum||1,
-            totalConfrontos:totalConfrontos, temCoroa:temCoroa
+            totalConfrontos:totalConfrontos, temCoroa:temCoroa,
+            isWO:isWO, ausente:ausente
           });
         });
       });
     });
   });
 
-  // Calcula stats e score para cada jogador
   Object.keys(jogadores).forEach(function(nome) {
     var jog = jogadores[nome];
     var rodadas = jog.rodadas;
     if (rodadas.length === 0) return;
 
-    var vitorias=0, coroas=0, totalPts=0, melhorPts=0, confAtual=0;
+    var vitorias=0, coroas=0, totalPts=0, melhorPts=0, confAtual=0, ausencias=0, wos=0;
     rodadas.forEach(function(r){
       totalPts+=r.pontos;
-      if(r.posicao===1) vitorias++;
+      if(r.posicao===1 && !r.isWO && !r.ausente) vitorias++;
       if(r.temCoroa) coroas++;
       if(r.pontos>melhorPts) melhorPts=r.pontos;
       confAtual=r.confrontoNum;
+      if(r.ausente) ausencias++;
+      if(r.isWO) wos++;
     });
     var mediaPontos = totalPts / rodadas.length;
 
-    // ── NOVA FÓRMULA DO PADEL SCORE ──────────────────────────
-    // Normalização dos pontos: usa a maior pontuação de todos os jogadores como referência
-    var maxPontos = 100; // referência fixa para normalizar
-
     var scores = rodadas.map(function(r) {
-      // 1. VITÓRIA (40%) — 1º lugar = 10, 2º = 6, 3º = 3, 4º = 0
+      // Score base
       var vitScore = [10, 6, 3, 0][r.posicao-1] || 0;
-
-      // 2. PONTOS ABSOLUTOS (30%) — pontos / maxPontos * 10
-      var ptScore = Math.min(10, (r.pontos / maxPontos) * 10);
-
-      // 3. NÍVEL DO CONFRONTO (20%) — C1=10, C2=9, C3=8... até 1
-      var nivelScore = Math.max(1, 10 - (r.confrontoNum - 1) * (9 / Math.max(1, r.totalConfrontos - 1)));
-
-      // 4. CONSISTÊNCIA (10%) — bônus por coroa, penaliza posição ruim
-      var consScore = r.temCoroa ? 10 : (r.posicao <= 2 ? 7 : r.posicao === 3 ? 4 : 1);
+      var ptScore = Math.min(10, (r.pontos / 100) * 10);
+      var nivelScore = Math.max(1, 10 - (r.confrontoNum-1) * (9/Math.max(1,r.totalConfrontos-1)));
+      var consScore = r.temCoroa ? 10 : (r.posicao<=2 ? 7 : r.posicao===3 ? 4 : 1);
 
       var total = vitScore*0.40 + ptScore*0.30 + nivelScore*0.20 + consScore*0.10;
+
+      // Penalidades
+      if (r.ausente) total = Math.max(0, total - 0.5);
+      if (r.isWO)    total = Math.max(0, total - 1.0);
+
       return {
         jogo:r.jogo, total:parseFloat(total.toFixed(2)),
         pontos:r.pontos, posicao:r.posicao,
-        confrontoNum:r.confrontoNum, temCoroa:r.temCoroa
+        confrontoNum:r.confrontoNum, temCoroa:r.temCoroa,
+        isWO:r.isWO, ausente:r.ausente
       };
     });
 
-    // Score geral = média ponderada (rodadas recentes valem mais)
     var pesoTotal=0, somaScore=0;
     scores.forEach(function(s,idx){
-      var peso = idx + 1;
-      somaScore += s.total * peso;
+      var peso = idx+1;
+      somaScore += s.total*peso;
       pesoTotal += peso;
     });
-    var scoreGeral = pesoTotal>0 ? parseFloat((somaScore/pesoTotal).toFixed(2)) : 0;
-    var scoreRodada = scores.length>0 ? scores[scores.length-1].total : 0;
+
+    // Corrige categoria usando dados do CSV atual
+    var cat = jog.cat;
+    if (DATA && DATA.masc && DATA.fem) {
+      var inMasc = DATA.masc.some(function(g){ return g.players.some(function(p){ return p.name===nome; }); });
+      var inFem  = DATA.fem.some(function(g){ return g.players.some(function(p){ return p.name===nome; }); });
+      if (inMasc) cat = 'masc';
+      else if (inFem) cat = 'fem';
+    }
 
     stats[nome] = {
       nome:nome, nomeOriginal:jog.nomeOriginal,
-      cat:jog.cat, foto:'',
-      score:scoreGeral, scoreRodada:scoreRodada,
+      cat:cat, foto:'',
+      score: pesoTotal>0 ? parseFloat((somaScore/pesoTotal).toFixed(2)) : 0,
+      scoreRodada: scores.length>0 ? scores[scores.length-1].total : 0,
       scoreRodadas:scores, rodadas:rodadas,
       vitorias:vitorias, coroas:coroas, totalPontos:totalPts,
       rodadasJogadas:rodadas.length, melhorPontos:melhorPts,
-      confrontoAtual:confAtual,
-      mediaPontos:parseFloat(mediaPontos.toFixed(1))
+      confrontoAtual:confAtual, mediaPontos:parseFloat(mediaPontos.toFixed(1)),
+      ausencias:ausencias, wos:wos
     };
   });
-  // Corrige categoria usando os dados do CSV atual (mais confiável)
-  if (DATA && DATA.masc && DATA.fem) {
-    var mascNames = {}, femNames = {};
-    DATA.masc.forEach(function(g){ g.players.forEach(function(p){ if(p.name) mascNames[p.name]=true; }); });
-    DATA.fem.forEach(function(g){ g.players.forEach(function(p){ if(p.name) femNames[p.name]=true; }); });
-    Object.keys(stats).forEach(function(nome) {
-      if (mascNames[nome]) stats[nome].cat = 'masc';
-      else if (femNames[nome]) stats[nome].cat = 'fem';
-    });
-  }
   return stats;
 }
 
@@ -1319,6 +1329,8 @@ function openPerfil(nome) {
   if (s.coroas > 0)       badges += '<span class="perfil-badge coroa">Coroas: '+s.coroas+'</span>';
   if (s.mediaPontos > 0)  badges += '<span class="perfil-badge media">Media: '+s.mediaPontos+'pts</span>';
   if (s.melhorPontos > 0) badges += '<span class="perfil-badge melhor">Melhor: '+s.melhorPontos+'pts</span>';
+  if (s.ausencias > 0)    badges += '<span class="perfil-badge" style="background:rgba(255,152,0,0.1);border-color:rgba(255,152,0,0.4);color:#ff9800">Ausente: '+s.ausencias+'x</span>';
+  if (s.wos > 0)          badges += '<span class="perfil-badge" style="background:rgba(255,68,68,0.1);border-color:rgba(255,68,68,0.4);color:#ff4444">WO: '+s.wos+'x</span>';
   document.getElementById('perfilBadges').innerHTML = badges;
 
   // Score IA
@@ -1382,7 +1394,8 @@ function renderHistTabela(s) {
   var rows = s.scoreRodadas.slice().reverse().map(function(sr, idx) {
     var jogo = sr.jogo.replace('2026 ','');
     var posCls = ['p1','p2','p3','p4'][sr.posicao-1]||'p4';
-    var posLabel = ['1 subiu','2 ficou','3 ficou','4 desceu'][sr.posicao-1]||sr.posicao;
+    var posLabel = sr.isWO ? 'WO' : sr.ausente ? 'Ausente' : ['1 subiu','2 ficou','3 ficou','4 desceu'][sr.posicao-1]||sr.posicao;
+    var posCls2 = sr.isWO ? 'p4' : sr.ausente ? 'p4' : posCls;
     var prev = s.scoreRodadas[s.scoreRodadas.length-2-idx];
     var movCls='stay', movLabel='-';
     if (prev) {
