@@ -980,7 +980,8 @@ function processData(payload){
     DATA=data;
     STATS = payload.stats || {};
     applyConfig(cfg);buildHistButtons(HISTORICO);
-    renderDestaques();
+    if (IS_ADMIN) renderDestaques();
+    else document.getElementById('destacesSection').className = 'destaques-section hidden';
     renderR4(DATA.masc,"masc","");renderR4(DATA.fem,"fem","");
     var mH=DATA.masc.some(function(g){return g.players.some(function(p){return p.jogo4>0;});}),fH=DATA.fem.some(function(g){return g.players.some(function(p){return p.jogo4>0;});});
     renderR5(mH?computeNextRound(DATA.masc):DATA.next_masc,"panel-next-masc");
