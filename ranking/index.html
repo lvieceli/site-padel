@@ -604,7 +604,7 @@ function renderR4(groups,cat,filter){
         else slotCls="slot-num slot-4th";
       }
       html+='<div class="'+rowCls+'"><div class="'+slotCls+'">'+(((g.confrontoNum-1)*4)+p.slot)+"</div>";
-      var perfilBtn = !empty ? '<button class="btn-perfil" onclick="event.stopPropagation();openPerfil(this.getAttribute(chr39+\'data-nome\'+chr39))" data-nome="'+esc(p.name)+'">&#128202;</button>' : '';
+      var perfilBtn = (!empty && IS_ADMIN) ? '<button class="btn-perfil" data-nome="'+esc(p.name)+'" onclick="event.stopPropagation();openPerfil(this.dataset.nome)">&#128202;</button>' : '';
       html+='<div class="'+nameCls+'" style="display:flex;align-items:center;gap:.3rem">'+displayName+perfilBtn+"</div>"+j4+sm+"</div>";
     }
     html+="</div>";
@@ -965,7 +965,7 @@ function buildHistButtons(h){
     var key=sorted[i],nm=key.match(/\d+$/),num=nm?nm[0]:"";
     var btn=document.createElement("button");btn.className="nav-btn hist-btn";btn.textContent=num+"ª Rodada - Concluída";btn.dataset.key=key;
     btn.onclick=(function(k){return function(){openHist(k);};})(key);
-    nav.insertBefore(btn,br);
+    if(IS_ADMIN) nav.insertBefore(btn,br);
   }
 }
 
@@ -1164,6 +1164,16 @@ function calcularStatsLocal(historico) {
       mediaPontos:parseFloat(mediaPontos.toFixed(1))
     };
   });
+  // Corrige categoria usando os dados do CSV atual (mais confiável)
+  if (DATA && DATA.masc && DATA.fem) {
+    var mascNames = {}, femNames = {};
+    DATA.masc.forEach(function(g){ g.players.forEach(function(p){ if(p.name) mascNames[p.name]=true; }); });
+    DATA.fem.forEach(function(g){ g.players.forEach(function(p){ if(p.name) femNames[p.name]=true; }); });
+    Object.keys(stats).forEach(function(nome) {
+      if (mascNames[nome]) stats[nome].cat = 'masc';
+      else if (femNames[nome]) stats[nome].cat = 'fem';
+    });
+  }
   return stats;
 }
 
@@ -1459,7 +1469,7 @@ function buildHistButtons(h){
     var key=sorted[i],nm=key.match(/\d+$/),num=nm?nm[0]:'';
     var btn=document.createElement('button');btn.className='nav-btn hist-btn';btn.textContent=num+'a Rodada - Concluida';btn.dataset.key=key;
     btn.onclick=(function(k){return function(){openHist(k);};})(key);
-    nav.insertBefore(btn,br);
+    if(IS_ADMIN) nav.insertBefore(btn,br);
   }
 }
 
@@ -1474,7 +1484,8 @@ function processData(payload){
     if(data.masc.length===0&&data.fem.length===0)throw new Error('Sem dados');
     DATA=data;
     applyConfig(cfg);buildHistButtons(HISTORICO);
-    if(IS_ADMIN){STATS=calcularStatsLocal(HISTORICO);renderDestaques();}
+    STATS=calcularStatsLocal(HISTORICO);
+    if(IS_ADMIN){renderDestaques();}
     renderR4(DATA.masc,'masc','');renderR4(DATA.fem,'fem','');
     var mH=DATA.masc.some(function(g){return g.players.some(function(p){return p.jogo4>0;});}),fH=DATA.fem.some(function(g){return g.players.some(function(p){return p.jogo4>0;});});
     renderR5(mH?computeNextRound(DATA.masc):DATA.next_masc,'panel-next-masc');
