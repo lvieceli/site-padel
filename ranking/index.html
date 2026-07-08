@@ -329,7 +329,7 @@ footer{text-align:center;padding:1.8rem 0 2.5rem;color:#2e2e2e;font-size:.68rem;
     <div class="rodada-text"><strong id="rodadaTitle">Carregando...</strong></div>
   </div>
   <!-- DESTAQUES DA RODADA -->
-  <div class="destaques-section" id="destacesSection">
+  <div class="destaques-section hidden" id="destacesSection">
     <div class="destaques-title">
       🏆 Destaques da Rodada
       <button class="destaques-toggle" id="destacesToggle" onclick="toggleDestaques()">▼ Ver top 5</button>
@@ -980,8 +980,7 @@ function processData(payload){
     DATA=data;
     STATS = payload.stats || {};
     applyConfig(cfg);buildHistButtons(HISTORICO);
-    if (IS_ADMIN) renderDestaques();
-    else document.getElementById('destacesSection').className = 'destaques-section hidden';
+    renderDestaques();
     renderR4(DATA.masc,"masc","");renderR4(DATA.fem,"fem","");
     var mH=DATA.masc.some(function(g){return g.players.some(function(p){return p.jogo4>0;});}),fH=DATA.fem.some(function(g){return g.players.some(function(p){return p.jogo4>0;});});
     renderR5(mH?computeNextRound(DATA.masc):DATA.next_masc,"panel-next-masc");
@@ -1059,6 +1058,74 @@ function loadDispStatus() {
 
 
 var STATS = {};
+
+// ── CALCULA STATS LOCALMENTE NO BROWSER ──
+function cleanNome(n) { return (n||'').replace(/\uD83D\uDC51/g,'').trim(); }
+
+function calcularStatsLocal(historico) {
+  var stats = {};
+  var jogoKeys = Object.keys(historico).sort(function(a,b){
+    return parseInt(a.replace(/\D/g,''))-parseInt(b.replace(/\D/g,''));
+  });
+  var jogadores = {};
+  jogoKeys.forEach(function(jogo) {
+    var hd = historico[jogo];
+    ['masc','fem'].forEach(function(cat) {
+      (hd[cat]||[]).forEach(function(g) {
+        g.players.forEach(function(p) {
+          var nome = cleanNome(p.nome);
+          if (!nome || jogadores[nome]) return;
+          jogadores[nome] = {cat:cat, nomeOriginal:p.nome};
+        });
+      });
+    });
+  });
+  Object.keys(jogadores).forEach(function(nome) {
+    var rodadas = [];
+    jogoKeys.forEach(function(jogo) {
+      var hd = historico[jogo];
+      ['masc','fem'].forEach(function(cat) {
+        (hd[cat]||[]).forEach(function(g) {
+          g.players.forEach(function(p) {
+            if (cleanNome(p.nome) !== nome || !p.jogo || p.jogo===0) return;
+            var jogComPts = g.players.filter(function(x){return x.jogo>0;});
+            var sorted = jogComPts.slice().sort(function(a,b){return b.jogo-a.jogo;});
+            var posicao=4;
+            for(var pi=0;pi<sorted.length;pi++){if(cleanNome(sorted[pi].nome)===nome){posicao=pi+1;break;}}
+            var mediaConf=jogComPts.length>0?jogComPts.reduce(function(a,x){return a+x.jogo;},0)/jogComPts.length:0;
+            var temCoroa=(p.nome||'').indexOf('\uD83D\uDC51')>=0;
+            rodadas.push({jogo:jogo,pontos:p.jogo,soma:p.soma||0,posicao:posicao,
+              confrontoNum:g.numero||g.confrontoNum||1,totalConfrontos:(hd[cat]||[]).length,
+              mediaConf:mediaConf,temCoroa:temCoroa});
+          });
+        });
+      });
+    });
+    var scores=[];
+    rodadas.forEach(function(r){
+      var ptScore=r.mediaConf>0?Math.min(10,Math.max(0,5+(r.pontos-r.mediaConf)/r.mediaConf*10)):5;
+      var posScore=[10,7,4,1][r.posicao-1]||1;
+      var nivelScore=Math.max(1,10-(r.confrontoNum-1)*(9/Math.max(1,r.totalConfrontos-1)));
+      var consScore=scores.length>0?Math.max(0,10-Math.abs(ptScore-scores[scores.length-1].total)):ptScore;
+      var tendScore=5;
+      if(scores.length>=2){var m=scores.slice(-2).reduce(function(a,s){return a+s.total;},0)/2;tendScore=ptScore>m?Math.min(10,5+(ptScore-m)):Math.max(0,5-(m-ptScore));}
+      var total=ptScore*0.40+posScore*0.20+nivelScore*0.15+consScore*0.10+tendScore*0.10+(r.temCoroa?10:5)*0.05;
+      scores.push({jogo:r.jogo,total:parseFloat(total.toFixed(2)),pontos:r.pontos,posicao:r.posicao,confrontoNum:r.confrontoNum,temCoroa:r.temCoroa});
+    });
+    var pesoTotal=0,somaScore=0;
+    scores.forEach(function(s,idx){var p=idx+1;somaScore+=s.total*p;pesoTotal+=p;});
+    var vitorias=0,coroas=0,totalPts=0,melhorPts=0,confAtual=0;
+    rodadas.forEach(function(r){totalPts+=r.pontos;if(r.posicao===1)vitorias++;if(r.temCoroa)coroas++;if(r.pontos>melhorPts)melhorPts=r.pontos;confAtual=r.confrontoNum;});
+    stats[nome]={nome:nome,nomeOriginal:jogadores[nome].nomeOriginal,cat:jogadores[nome].cat,foto:'',
+      score:pesoTotal>0?parseFloat((somaScore/pesoTotal).toFixed(2)):0,
+      scoreRodada:scores.length>0?scores[scores.length-1].total:0,
+      scoreRodadas:scores,rodadas:rodadas,vitorias:vitorias,coroas:coroas,totalPontos:totalPts,
+      rodadasJogadas:rodadas.length,melhorPontos:melhorPts,confrontoAtual:confAtual,
+      mediaPontos:rodadas.length>0?parseFloat((totalPts/rodadas.length).toFixed(1)):0};
+  });
+  return stats;
+}
+
 
 // ── DESTAQUES ──────────────────────────────────────────────
 var top5Visible = false;
