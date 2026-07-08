@@ -978,9 +978,8 @@ function processData(payload){
     var rows=parseCSV(csvText),data=buildData(rows);
     if(data.masc.length===0&&data.fem.length===0)throw new Error("Sem dados");
     DATA=data;
-    STATS = payload.stats || {};
     applyConfig(cfg);buildHistButtons(HISTORICO);
-    renderDestaques();
+    if(IS_ADMIN){STATS=calcularStatsLocal(HISTORICO);renderDestaques();};
     renderR4(DATA.masc,"masc","");renderR4(DATA.fem,"fem","");
     var mH=DATA.masc.some(function(g){return g.players.some(function(p){return p.jogo4>0;});}),fH=DATA.fem.some(function(g){return g.players.some(function(p){return p.jogo4>0;});});
     renderR5(mH?computeNextRound(DATA.masc):DATA.next_masc,"panel-next-masc");
