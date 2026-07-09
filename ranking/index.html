@@ -223,37 +223,33 @@ footer{text-align:center;padding:1.8rem 0 2.5rem;color:#2e2e2e;font-size:.68rem;
 
 /* ── DESTAQUES DA RODADA ── */
 .destaques-section{margin-bottom:1.3rem}
-.destaques-title{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:.75rem;display:flex;align-items:center;gap:.6rem}
-.destaques-title::after{content:"";flex:1;height:1px;background:var(--border)}
-.destaques-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
-.destaque-cat-label{font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.4rem;padding-left:.2rem}
-.destaque-top{background:linear-gradient(135deg,rgba(200,240,0,0.06),rgba(200,240,0,0.02));border:1px solid rgba(200,240,0,0.2);border-radius:12px;padding:.75rem;cursor:pointer;transition:all .2s}
-.destaque-top.fem{background:linear-gradient(135deg,rgba(255,107,157,0.06),rgba(255,107,157,0.02));border-color:rgba(255,107,157,0.2)}
-.destaque-top:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(0,0,0,0.3)}
-.destaque-top-inner{display:flex;align-items:center;gap:.6rem}
-.destaque-foto{width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid rgba(200,240,0,0.4);flex-shrink:0;background:var(--surface2)}
-.destaque-foto.fem{border-color:rgba(255,107,157,0.4)}
-.destaque-foto-placeholder{width:42px;height:42px;border-radius:50%;background:var(--surface2);border:2px solid rgba(200,240,0,0.3);display:flex;align-items:center;justify-content:center;font-family:"Bebas Neue",cursive;font-size:1.1rem;color:var(--accent);flex-shrink:0}
-.destaque-foto-placeholder.fem{border-color:rgba(255,107,157,0.3);color:var(--fem)}
-.destaque-info{flex:1;min-width:0}
-.destaque-nome{font-size:.82rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.destaque-scores{display:flex;gap:.4rem;margin-top:.2rem;flex-wrap:wrap}
-.destaque-score-geral{font-size:.65rem;font-weight:700;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:.1rem .35rem}
-.destaque-score-rodada{font-size:.68rem;font-weight:800;color:var(--accent);background:rgba(200,240,0,0.1);border:1px solid rgba(200,240,0,0.3);border-radius:4px;padding:.1rem .35rem}
-.destaque-score-rodada.fem{color:var(--fem);background:rgba(255,107,157,0.1);border-color:rgba(255,107,157,0.3)}
-.top5-grid{display:flex;flex-direction:column;gap:.3rem;margin-top:.5rem}
-.top5-item{display:flex;align-items:center;gap:.5rem;padding:.3rem .5rem;background:var(--surface);border:1px solid var(--border);border-radius:7px;cursor:pointer;transition:all .15s}
-.top5-item:hover{border-color:#444;background:var(--surface2)}
-.top5-rank{font-size:.65rem;font-weight:800;color:var(--muted);width:14px;text-align:center;flex-shrink:0}
+.destaques-title-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;padding-bottom:.7rem;border-bottom:1px solid var(--border)}
+.destaques-title-text{font-family:"Bebas Neue",cursive;font-size:1.3rem;letter-spacing:.1em;color:var(--accent)}
+.destaques-title-text span{color:var(--muted);font-size:.7rem;font-family:"Outfit",sans-serif;font-weight:600;letter-spacing:.05em;margin-left:.5rem;text-transform:uppercase}
+.destaques-toggle{background:none;border:1px solid var(--border);color:var(--muted);font-size:.65rem;font-family:"Outfit",sans-serif;cursor:pointer;padding:.25rem .6rem;border-radius:6px;transition:all .15s}
+.destaques-toggle:hover{color:var(--text);border-color:#444}
+.destaques-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.destaque-cat-label{font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:.5rem;padding-left:.2rem}
+.top5-grid{display:flex;flex-direction:column;gap:.4rem}
+.top5-item{display:flex;align-items:center;gap:.6rem;padding:.55rem .75rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .15s}
+.top5-item:hover{border-color:#444;background:var(--surface2);transform:translateX(2px)}
+.top5-item.masc-item{border-left:2px solid rgba(200,240,0,0.3)}
+.top5-item.fem-item{border-left:2px solid rgba(255,107,157,0.3)}
+.top5-rank{font-size:.7rem;font-weight:900;width:16px;text-align:center;flex-shrink:0}
 .top5-rank.gold{color:#ffd700}
 .top5-rank.silver{color:#c0c0c0}
 .top5-rank.bronze{color:#cd7f32}
-.top5-foto-mini{width:22px;height:22px;border-radius:50%;object-fit:cover;flex-shrink:0;background:var(--surface2);border:1px solid var(--border)}
-.top5-nome{font-size:.75rem;font-weight:600;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.top5-score{font-size:.7rem;font-weight:800;color:var(--accent)}
-.top5-score.fem{color:var(--fem)}
-.destaques-toggle{background:none;border:none;color:var(--muted);font-size:.65rem;font-family:"Outfit",sans-serif;cursor:pointer;padding:.2rem .4rem;border-radius:4px;transition:color .15s}
-.destaques-toggle:hover{color:var(--text)}
+.top5-rank.normal{color:var(--muted)}
+.top5-foto-mini{width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;background:var(--surface2);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:"Bebas Neue",cursive;font-size:.85rem;font-weight:700}
+.top5-foto-mini.masc-av{border-color:rgba(200,240,0,0.3);color:var(--accent)}
+.top5-foto-mini.fem-av{border-color:rgba(255,107,157,0.3);color:var(--fem)}
+.top5-nome{font-size:.82rem;font-weight:600;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top5-scores{display:flex;gap:.35rem;flex-shrink:0;align-items:center}
+.top5-score-geral{font-size:.62rem;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:.1rem .3rem;font-weight:600}
+.top5-score-rd{font-size:.72rem;font-weight:800;color:var(--accent);background:rgba(200,240,0,0.1);border:1px solid rgba(200,240,0,0.25);border-radius:4px;padding:.1rem .35rem}
+.top5-score-rd.fem{color:var(--fem);background:rgba(255,107,157,0.1);border-color:rgba(255,107,157,0.25)}
+.destaque-top{display:none}
+.destaque-foto-placeholder{display:none}
 /* ── PERFIL DO JOGADOR ── */
 #view-perfil{position:fixed;inset:0;background:var(--bg);z-index:100;overflow-y:auto}
 .perfil-screen{max-width:680px;margin:0 auto;padding:1.2rem}
@@ -330,30 +326,20 @@ footer{text-align:center;padding:1.8rem 0 2.5rem;color:#2e2e2e;font-size:.68rem;
   </div>
   <!-- DESTAQUES DA RODADA -->
   <div class="destaques-section hidden" id="destacesSection">
-    <div class="destaques-title">
-      🏆 Destaques da Rodada
-      <button class="destaques-toggle" id="destacesToggle" onclick="toggleDestaques()">▼ Ver top 5</button>
+    <div class="destaques-title-bar">
+      <div>
+        <div class="destaques-title-text">🏆 Destaques <span id="destacesRodadaLabel"></span></div>
+      </div>
+      <button class="destaques-toggle" id="destacesToggle" onclick="toggleDestaques()">▲ Fechar</button>
     </div>
-    <div class="destaques-grid" id="destacesGrid">
+    <div class="destaques-grid">
       <div>
         <div class="destaque-cat-label">🧑 Masculino</div>
-        <div id="destaqueMasc"></div>
+        <div class="top5-grid" id="top5Masc"></div>
       </div>
       <div>
         <div class="destaque-cat-label">👩 Feminino</div>
-        <div id="destaqueFem"></div>
-      </div>
-    </div>
-    <div id="top5Section" class="hidden">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-top:.7rem">
-        <div>
-          <div class="destaque-cat-label" style="margin-top:.5rem">Top 5 Masculino</div>
-          <div class="top5-grid" id="top5Masc"></div>
-        </div>
-        <div>
-          <div class="destaque-cat-label" style="margin-top:.5rem">Top 5 Feminino</div>
-          <div class="top5-grid" id="top5Fem"></div>
-        </div>
+        <div class="top5-grid" id="top5Fem"></div>
       </div>
     </div>
   </div>
@@ -1207,6 +1193,12 @@ function renderDestaques() {
     return;
   }
   document.getElementById('destacesSection').className = 'destaques-section';
+  document.getElementById('destacesToggle').textContent = '\u25b2 Fechar';
+
+  // Atualiza label da rodada
+  var rodada = (window._cfgRodada||'').replace(/\s*[-]\s*Atual/i,'').trim();
+  var num = parseInt((rodada||'').replace(/\D/g,''));
+  document.getElementById('destacesRodadaLabel').textContent = num ? 'da '+num+'\u00aa Rodada' : '';
 
   function sortByCat(cat) {
     return Object.values(STATS)
@@ -1216,66 +1208,43 @@ function renderDestaques() {
   var topMasc = sortByCat('masc');
   var topFem  = sortByCat('fem');
 
-  function makeFotoEl(s, cls) {
-    var el;
+  function makeFotoEl(s, isFem) {
+    var el = document.createElement('div');
+    el.className = 'top5-foto-mini ' + (isFem ? 'fem-av' : 'masc-av');
     if (s.foto) {
-      el = document.createElement('img');
-      el.className = cls;
-      el.src = s.foto;
-      el.onerror = function() { hideEl(this); };
+      var img = document.createElement('img');
+      img.style.cssText = 'width:100%;height:100%;border-radius:50%;object-fit:cover';
+      img.src = s.foto;
+      img.onerror = function(){ hideEl(this); el.textContent = s.nome.charAt(0); };
+      el.appendChild(img);
     } else {
-      el = document.createElement('div');
-      el.className = cls.replace('-foto','-foto-placeholder');
       el.textContent = s.nome.charAt(0);
     }
     return el;
   }
 
-  function buildTop1El(s, isFem) {
-    if (!s) {
-      var p = document.createElement('p');
-      p.style.cssText = 'color:var(--muted);font-size:.75rem;padding:.5rem';
-      p.textContent = 'Sem dados ainda';
-      return p;
-    }
-    var catCls = isFem ? ' fem' : '';
-    var wrap = document.createElement('div');
-    wrap.className = 'destaque-top' + catCls;
-    wrap.setAttribute('data-nome', s.nome);
-    wrap.onclick = function(){ openPerfil(this.getAttribute('data-nome')); };
-    var inner = document.createElement('div'); inner.className = 'destaque-top-inner';
-    inner.appendChild(makeFotoEl(s, 'destaque-foto' + catCls));
-    var info = document.createElement('div'); info.className = 'destaque-info';
-    var nomeEl = document.createElement('div'); nomeEl.className = 'destaque-nome'; nomeEl.textContent = s.nome;
-    var scEl = document.createElement('div'); scEl.className = 'destaque-scores';
-    var sg = document.createElement('span'); sg.className = 'destaque-score-geral'; sg.textContent = 'Geral ' + s.score;
-    var sr = document.createElement('span'); sr.className = 'destaque-score-rodada' + catCls; sr.textContent = s.scoreRodada;
-    scEl.appendChild(sg); scEl.appendChild(sr);
-    info.appendChild(nomeEl); info.appendChild(scEl);
-    inner.appendChild(info); wrap.appendChild(inner);
-    return wrap;
-  }
-
-  function renderTop1(s, isFem, cId) {
-    var c = document.getElementById(cId); c.innerHTML = '';
-    c.appendChild(buildTop1El(s, isFem));
-  }
-
-  renderTop1(topMasc[0], false, 'destaqueMasc');
-  renderTop1(topFem[0],  true,  'destaqueFem');
-
   function renderTop5(list, isFem, cId) {
     var c = document.getElementById(cId); c.innerHTML = '';
     if (!list.length) { c.innerHTML = '<p style="color:var(--muted);font-size:.72rem;padding:.3rem">Sem dados</p>'; return; }
     list.slice(0,5).forEach(function(s,i) {
-      var item = document.createElement('div'); item.className = 'top5-item';
+      var item = document.createElement('div');
+      item.className = 'top5-item ' + (isFem ? 'fem-item' : 'masc-item');
       item.setAttribute('data-nome', s.nome);
       item.onclick = function(){ openPerfil(this.getAttribute('data-nome')); };
-      var rCls = i===0?' gold':i===1?' silver':i===2?' bronze':'';
+
+      var rCls = i===0?' gold':i===1?' silver':i===2?' bronze':' normal';
       var rank = document.createElement('span'); rank.className = 'top5-rank'+rCls; rank.textContent = i+1;
-      var scEl = document.createElement('span'); scEl.className = 'top5-score'+(isFem?' fem':''); scEl.textContent = s.scoreRodada;
-      var nEl = document.createElement('span'); nEl.className = 'top5-nome'; nEl.textContent = s.nome;
-      item.appendChild(rank); item.appendChild(makeFotoEl(s,'top5-foto-mini')); item.appendChild(nEl); item.appendChild(scEl);
+
+      var fotoEl = makeFotoEl(s, isFem);
+
+      var nomeEl = document.createElement('span'); nomeEl.className = 'top5-nome'; nomeEl.textContent = s.nome;
+
+      var scoresEl = document.createElement('div'); scoresEl.className = 'top5-scores';
+      var sg = document.createElement('span'); sg.className = 'top5-score-geral'; sg.textContent = 'G '+s.score;
+      var sr = document.createElement('span'); sr.className = 'top5-score-rd'+(isFem?' fem':''); sr.textContent = s.scoreRodada;
+      scoresEl.appendChild(sg); scoresEl.appendChild(sr);
+
+      item.appendChild(rank); item.appendChild(fotoEl); item.appendChild(nomeEl); item.appendChild(scoresEl);
       c.appendChild(item);
     });
   }
@@ -1457,6 +1426,7 @@ function toOrdinal(n){var num=parseInt(String(n).replace(/\D/g,''));if(!num)retu
 function applyConfig(cfg){
   if(!cfg)return;
   window._cfgProxima=cfg.proxima||'Proxima';
+  window._cfgRodada=cfg.rodada||'';
   CFG=cfg;
   var rodada=(cfg.rodada||'').replace(/\s*[-]\s*Atual/i,'').trim();
   if(cfg.dataInicio){try{var pts=cfg.dataInicio.split('/');var dI=new Date(pts[2],pts[1]-1,pts[0]);dI.setHours(12,0,0,0);CFG.dataInicio=dI;}catch(e){}}
