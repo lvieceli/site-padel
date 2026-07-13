@@ -182,11 +182,7 @@ footer{text-align:center;padding:1.8rem 0 2.5rem;color:#2e2e2e;font-size:.68rem;
 .cal-day-row{display:grid;gap:.35rem;align-items:center;padding:.45rem .8rem;background:var(--surface2);border-bottom:1px solid var(--border)}
 .cal-day-row[data-cols="3"]{grid-template-columns:60px 1fr 1fr 1fr}
 .cal-day-row[data-cols="2"]{grid-template-columns:60px 1fr 1fr}
-@media(max-width:380px){
-  .cal-day-row[data-cols="3"]{grid-template-columns:50px 1fr 1fr 1fr}
-  .cal-day-row[data-cols="2"]{grid-template-columns:50px 1fr 1fr}
-  .period-btn{font-size:.6rem;padding:.35rem .1rem}
-}
+
 /* Cruzamento */
 .cruzamento-header{display:flex;align-items:center;gap:.6rem;margin-bottom:.8rem}
 .cruzamento-header h3{font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.12em}
@@ -218,39 +214,8 @@ footer{text-align:center;padding:1.8rem 0 2.5rem;color:#2e2e2e;font-size:.68rem;
 .legend{display:flex;gap:.8rem;margin-top:.6rem;margin-bottom:1rem;flex-wrap:wrap}
 .legend-item{display:flex;align-items:center;gap:.3rem;font-size:.65rem;color:var(--muted)}
 .legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
-@media(max-width:600px){
-  .player-row,.col-headers{grid-template-columns:24px 1fr 56px 56px;padding:.45rem .75rem}
-  .confronto-header{padding:.45rem .75rem;flex-wrap:wrap}
-  .player-name{font-size:.78rem}
-  .logo-escudo{height:78px}
-  .logo-clube{height:40px}
-  .nav-btn{font-size:.7rem;padding:.5rem .4rem}
-  .player-selector{grid-template-columns:repeat(2,1fr)}
-  .agenda-screen{padding:.8rem}
-  /* Calendário: força layout vertical no mobile */
-  .cal-col-headers.sem{grid-template-columns:60px 1fr 1fr 1fr}
-  .cal-col-headers.fds{grid-template-columns:60px 1fr 1fr}
-  .cal-day [style*="grid-template-columns:28px 1fr 1fr 1fr"]{grid-template-columns:60px 1fr 1fr 1fr!important}
-  .cal-day [style*="grid-template-columns:28px 1fr 1fr"]{grid-template-columns:60px 1fr 1fr!important}
-  .col-hdr-btn{font-size:.58rem;padding:.3rem .15rem}
-  .period-btn{font-size:.65rem;padding:.38rem .15rem}
-  .destaques-grid{grid-template-columns:1fr}
-  .perfil-hero{flex-direction:column;text-align:center}
-  .score-ia-main{justify-content:center}
-  /* Agenda screen full width */
-  #view-agenda{overflow-x:hidden}
-  .agenda-screen{max-width:100%;padding:.6rem}
-  /* Cal day header compacto */
-  .cal-day-label{font-size:.7rem}
-  .cal-day-label.weekend{font-size:.7rem}
-  /* Botão todos menor */
-  .btn-toggle-all{font-size:.55rem;padding:.12rem .35rem}
-}
-@media(max-width:380px){
-  .cal-col-headers.sem{grid-template-columns:50px 1fr 1fr 1fr}
-  .period-btn{font-size:.58rem;padding:.32rem .1rem}
-  .col-hdr-btn{font-size:.52rem}
-}
+
+
 
 /* ── DESTAQUES DA RODADA ── */
 .destaques-section{margin-bottom:1.3rem}
@@ -335,6 +300,139 @@ footer{text-align:center;padding:1.8rem 0 2.5rem;color:#2e2e2e;font-size:.68rem;
 /* Botão perfil no ranking */
 .btn-perfil{background:none;border:none;color:rgba(200,240,0,0.4);font-size:.9rem;cursor:pointer;padding:.1rem .2rem;transition:color .15s;line-height:1;flex-shrink:0}
 .btn-perfil:hover{color:var(--accent)}
+
+/* ══ RESPONSIVO MOBILE ══ */
+
+/* Previne scroll horizontal global */
+html { overflow-x: hidden; }
+*, *::before, *::after { box-sizing: border-box; }
+
+/* Nav buttons: scroll horizontal em vez de wrap */
+.nav-buttons {
+  flex-wrap: nowrap !important;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.nav-buttons::-webkit-scrollbar { display: none; }
+.nav-btn { 
+  flex-shrink: 0 !important;
+  min-width: 0 !important;
+  white-space: nowrap;
+}
+
+@media(max-width:640px){
+  /* Container */
+  .container { padding: 0 .7rem; max-width: 100%; }
+  
+  /* Header */
+  .logo-escudo { height: 68px; }
+  .logo-clube { height: 36px; }
+  .header-title { font-size: 1.3rem; }
+  
+  /* Nav */
+  .nav-btn { font-size: .68rem; padding: .5rem .6rem; }
+  .nav-btn.active-ranking { font-size: .75rem; }
+  
+  /* Ranking table */
+  .player-row, .col-headers {
+    grid-template-columns: 22px 1fr 50px 50px;
+    padding: .4rem .6rem;
+    gap: .3rem;
+  }
+  .confronto-header { padding: .4rem .6rem; gap: .3rem; flex-wrap: wrap; }
+  .player-name { font-size: .75rem; }
+  .soma-cell { font-size: .9rem; }
+  .jogo-cell { font-size: .9rem; }
+  .slot-num { width: 22px; height: 22px; font-size: .6rem; }
+  
+  /* Tela agenda */
+  #view-agenda { overflow-x: hidden; }
+  .agenda-screen {
+    padding: .75rem;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  .agenda-back { font-size: .78rem; }
+  .agenda-header h2 { font-size: 1.2rem; }
+  
+  /* Seletor jogadores - 2x2 compacto */
+  .player-selector { grid-template-columns: 1fr 1fr; gap: .5rem; }
+  .player-card { padding: .65rem .5rem; }
+  .player-avatar { width: 38px; height: 38px; font-size: .95rem; }
+  .player-card-name { font-size: .74rem; }
+  .player-card-status { font-size: .57rem; }
+  
+  /* Calendário - col label dia menor */
+  .cal-col-headers { padding: 0 .5rem; }
+  .cal-col-headers.sem { grid-template-columns: 48px 1fr 1fr 1fr; }
+  .cal-col-headers.fds { grid-template-columns: 48px 1fr 1fr; }
+  .col-hdr-btn { font-size: .56rem; padding: .25rem .08rem; }
+  
+  .cal-day-row { padding: .38rem .5rem; gap: .2rem; }
+  .cal-day-row[data-cols="3"] { grid-template-columns: 48px 1fr 1fr 1fr; }
+  .cal-day-row[data-cols="2"] { grid-template-columns: 48px 1fr 1fr; }
+  .cal-day-label { font-size: .65rem; line-height: 1.2; }
+  .period-btn { font-size: .6rem; padding: .36rem .05rem; }
+  .btn-toggle-all { font-size: .52rem; padding: .12rem .25rem; }
+  .cal-section-label { font-size: .58rem; }
+  
+  /* Cruzamento */
+  .cruz-day-hdr { font-size: .66rem; padding: .32rem .5rem; }
+  .cruz-periods { padding: .38rem .5rem; gap: .2rem; }
+  .cruz-period { font-size: .58rem; padding: .3rem .05rem; }
+  .cruz-period-name { font-size: .55rem; }
+  .cruz-av { width: 9px; height: 9px; font-size: .32rem; }
+  .legend { gap: .4rem; }
+  .legend-item { font-size: .58rem; }
+  .match-count { font-size: .65rem; }
+  
+  /* Ações */
+  .agenda-actions { gap: .4rem; }
+  .btn-save { font-size: .82rem; padding: .62rem; }
+  .btn-clear { font-size: .74rem; padding: .62rem .7rem; }
+  
+  /* Perfil */
+  #view-perfil { overflow-x: hidden; }
+  .perfil-screen { padding: .75rem; width: 100%; max-width: 100%; overflow-x: hidden; }
+  .perfil-hero { padding: .7rem; gap: .65rem; }
+  .perfil-foto, .perfil-foto-ph { width: 56px; height: 56px; }
+  .perfil-foto-ph { font-size: 1.3rem; }
+  .perfil-nome { font-size: 1.15rem; }
+  .perfil-badges { gap: .22rem; }
+  .perfil-badge { font-size: .53rem; padding: .13rem .35rem; }
+  .score-ia-card { padding: .8rem .9rem; }
+  .score-ia-geral { font-size: 2rem; }
+  .score-ia-rodada-val { font-size: 1.2rem; }
+  .score-ia-rodada-box { padding: .35rem .55rem; }
+  .grafico-card { padding: .7rem .8rem; }
+  .grafico-wrap { height: 95px; }
+  .hist-table { font-size: .65rem; }
+  .hist-table th { font-size: .52rem; padding: .25rem .25rem; }
+  .hist-table td { padding: .3rem .25rem; }
+  .score-pill { font-size: .65rem; }
+  
+  /* Destaques */
+  .destaques-title-text { font-size: 1.1rem; }
+  .destaques-grid { grid-template-columns: 1fr; gap: .5rem; }
+  .top5-item { padding: .42rem .55rem; }
+  .top5-nome { font-size: .74rem; }
+  .top5-score-geral { display: none; }
+  .top5-foto-mini { width: 28px; height: 28px; font-size: .75rem; }
+  
+  /* Histórico */
+  .hist-banner, .proxima-banner { padding: .7rem .9rem; }
+}
+
+@media(max-width:360px){
+  .cal-col-headers.sem { grid-template-columns: 40px 1fr 1fr 1fr; }
+  .cal-col-headers.fds { grid-template-columns: 40px 1fr 1fr; }
+  .cal-day-row[data-cols="3"] { grid-template-columns: 40px 1fr 1fr 1fr; }
+  .cal-day-row[data-cols="2"] { grid-template-columns: 40px 1fr 1fr; }
+  .period-btn { font-size: .55rem; }
+}
 </style>
 </head>
 <body>
