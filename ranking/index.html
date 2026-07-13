@@ -9,7 +9,7 @@
 <style>
 :root{--bg:#0f0f0f;--surface:#161616;--surface2:#1e1e1e;--border:#2a2a2a;--accent:#c8f000;--accent-dim:rgba(200,240,0,0.12);--text:#f0f2f5;--muted:#6b7280;--fem:#ff6b9d;--next:#f0c040;--hist:#60b8f0;--match:#00e676}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:"Outfit",sans-serif;min-height:100vh}
+body{background:var(--bg);color:var(--text);font-family:"Outfit",sans-serif;min-height:100vh;overflow-x:hidden}
 body::before{content:"";position:fixed;inset:0;background:radial-gradient(ellipse 70% 40% at 50% 0%,rgba(200,240,0,0.04) 0%,transparent 60%);pointer-events:none;z-index:0}
 .container{max-width:960px;margin:0 auto;padding:0 1.2rem;position:relative;z-index:1}
 header{padding:1.8rem 0 1.5rem;text-align:center;border-bottom:1px solid var(--border);margin-bottom:1.5rem}
@@ -116,8 +116,8 @@ footer{text-align:center;padding:1.8rem 0 2.5rem;color:#2e2e2e;font-size:.68rem;
 .player-dot.pending{background:#111;color:#444;border:2px solid #2a2a2a}
 .player-dot.done{background:#0a0a0a;border-width:2px;border-style:solid}
 /* TELA AGENDA */
-#view-agenda{position:fixed;inset:0;background:var(--bg);z-index:100;overflow-y:auto}
-.agenda-screen{max-width:660px;margin:0 auto;padding:1.2rem}
+#view-agenda{position:fixed;inset:0;background:var(--bg);z-index:100;overflow-y:auto;overflow-x:hidden}
+.agenda-screen{max-width:660px;margin:0 auto;padding:1.2rem;overflow-x:hidden}
 .agenda-back{display:flex;align-items:center;gap:.6rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.7rem 1rem;cursor:pointer;color:var(--muted);font-size:.82rem;font-weight:600;margin-bottom:1.2rem;transition:all .2s;width:100%;font-family:"Outfit",sans-serif}
 .agenda-back:hover{color:var(--text);border-color:#444}
 .agenda-header{text-align:center;margin-bottom:1.4rem;padding-bottom:1rem;border-bottom:1px solid var(--border)}
@@ -179,6 +179,14 @@ footer{text-align:center;padding:1.8rem 0 2.5rem;color:#2e2e2e;font-size:.68rem;
 .save-msg.show{opacity:1}
 .save-msg.ok{color:var(--match)}
 .save-msg.err{color:#ff4444}
+.cal-day-row{display:grid;gap:.35rem;align-items:center;padding:.45rem .8rem;background:var(--surface2);border-bottom:1px solid var(--border)}
+.cal-day-row[data-cols="3"]{grid-template-columns:60px 1fr 1fr 1fr}
+.cal-day-row[data-cols="2"]{grid-template-columns:60px 1fr 1fr}
+@media(max-width:380px){
+  .cal-day-row[data-cols="3"]{grid-template-columns:50px 1fr 1fr 1fr}
+  .cal-day-row[data-cols="2"]{grid-template-columns:50px 1fr 1fr}
+  .period-btn{font-size:.6rem;padding:.35rem .1rem}
+}
 /* Cruzamento */
 .cruzamento-header{display:flex;align-items:center;gap:.6rem;margin-bottom:.8rem}
 .cruzamento-header h3{font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.12em}
@@ -210,15 +218,38 @@ footer{text-align:center;padding:1.8rem 0 2.5rem;color:#2e2e2e;font-size:.68rem;
 .legend{display:flex;gap:.8rem;margin-top:.6rem;margin-bottom:1rem;flex-wrap:wrap}
 .legend-item{display:flex;align-items:center;gap:.3rem;font-size:.65rem;color:var(--muted)}
 .legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
-@media(max-width:480px){
+@media(max-width:600px){
   .player-row,.col-headers{grid-template-columns:24px 1fr 56px 56px;padding:.45rem .75rem}
-  .confronto-header{padding:.45rem .75rem}
+  .confronto-header{padding:.45rem .75rem;flex-wrap:wrap}
   .player-name{font-size:.78rem}
   .logo-escudo{height:78px}
   .logo-clube{height:40px}
   .nav-btn{font-size:.7rem;padding:.5rem .4rem}
   .player-selector{grid-template-columns:repeat(2,1fr)}
   .agenda-screen{padding:.8rem}
+  /* Calendário: força layout vertical no mobile */
+  .cal-col-headers.sem{grid-template-columns:60px 1fr 1fr 1fr}
+  .cal-col-headers.fds{grid-template-columns:60px 1fr 1fr}
+  .cal-day [style*="grid-template-columns:28px 1fr 1fr 1fr"]{grid-template-columns:60px 1fr 1fr 1fr!important}
+  .cal-day [style*="grid-template-columns:28px 1fr 1fr"]{grid-template-columns:60px 1fr 1fr!important}
+  .col-hdr-btn{font-size:.58rem;padding:.3rem .15rem}
+  .period-btn{font-size:.65rem;padding:.38rem .15rem}
+  .destaques-grid{grid-template-columns:1fr}
+  .perfil-hero{flex-direction:column;text-align:center}
+  .score-ia-main{justify-content:center}
+  /* Agenda screen full width */
+  #view-agenda{overflow-x:hidden}
+  .agenda-screen{max-width:100%;padding:.6rem}
+  /* Cal day header compacto */
+  .cal-day-label{font-size:.7rem}
+  .cal-day-label.weekend{font-size:.7rem}
+  /* Botão todos menor */
+  .btn-toggle-all{font-size:.55rem;padding:.12rem .35rem}
+}
+@media(max-width:380px){
+  .cal-col-headers.sem{grid-template-columns:50px 1fr 1fr 1fr}
+  .period-btn{font-size:.58rem;padding:.32rem .1rem}
+  .col-hdr-btn{font-size:.52rem}
 }
 
 /* ── DESTAQUES DA RODADA ── */
@@ -733,12 +764,12 @@ function renderCal(){
 
   function renderDias(lista, tipo){
     var perdsRef = tipo==='fds' ? ['Manhã','Tarde'] : ['Manhã','Tarde','Noite'];
-    var gridCols = tipo==='fds' ? '28px 1fr 1fr' : '28px 1fr 1fr 1fr';
+    var gridCols = tipo==='fds' ? '60px 1fr 1fr' : '60px 1fr 1fr 1fr';
     var h='';
     lista.forEach(function(d){
       var k=dk(d),fds=isFds(d),sel=pd[k]||[];
-      h+='<div class="cal-day" style="overflow:visible">';
-      h+='<div style="display:grid;grid-template-columns:'+gridCols+';gap:.35rem;align-items:center;padding:.45rem .8rem;background:var(--surface2);border-bottom:1px solid var(--border)">';
+      h+='<div class="cal-day">';
+      h+='<div class="cal-day-row" data-cols="'+perdsRef.length+'">';
       h+='<span class="cal-day-label'+(fds?' weekend':'')+'" style="font-size:.72rem">'+(fds?'<b>':'')+fmtD(d).split(',')[0]+(fds?'</b>':'')+'<br><span style="font-size:.6rem;font-weight:400;color:var(--muted)">'+fmtD(d).split(',')[1].trim()+'</span></span>';
       perdsRef.forEach(function(per){
         var active=sel.indexOf(per)>=0;
