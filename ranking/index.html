@@ -677,7 +677,7 @@ function renderR4(groups,cat,filter){
     html+='<span class="agenda-status"><span class="agenda-dot '+dotClass+'"></span><span class="agenda-label '+dotClass+'">'+statusLabel+"</span></span>";
     // Bolinhas + botão num único bloco compacto
     var dotStatus=DISP_STATUS[agKey]||[];
-    if(IS_ADMIN){
+    {
       html+='<div class="disp-group">';
       if(IS_ADMIN)html+='<button class="btn-agendar" style="border:none" onclick=\'openAgenda('+btnInfo.replace(/'/g,"&#39;")+")'>\uD83D\uDCC5 Disponibilidade</button>";
       if(dotStatus.length>0){
