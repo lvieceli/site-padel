@@ -679,7 +679,7 @@ function renderR4(groups,cat,filter){
     var dotStatus=DISP_STATUS[agKey]||[];
     {
       html+='<div class="disp-group">';
-      if(IS_ADMIN)html+='<button class="btn-agendar" style="border:none" onclick=\'openAgenda('+btnInfo.replace(/'/g,"&#39;")+")'>\uD83D\uDCC5 Disponibilidade</button>";
+      html+='<button class="btn-agendar" style="border:none" onclick=\'openAgenda('+btnInfo.replace(/'/g,"&#39;")+")'>\uD83D\uDCC5 Disponibilidade</button>";
       if(dotStatus.length>0){
         html+='<div class="player-dots">';
         dotStatus.forEach(function(ps){
