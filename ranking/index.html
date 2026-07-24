@@ -91,6 +91,7 @@ header{padding:1.8rem 0 1.5rem;text-align:center;border-bottom:1px solid var(--b
 .soma-cell.fem{color:var(--fem)}
 .soma-cell.empty{color:#2a2a2a}
 .player-row.hl{background:rgba(200,240,0,0.04)}
+.sub-badge{width:16px;height:16px;border-radius:50%;border:1.5px solid #ff4444;display:inline-flex;align-items:center;justify-content:center;font-size:.52rem;font-weight:900;color:#ff4444;flex-shrink:0;margin-right:3px;vertical-align:middle;background:transparent}
 .player-row.hl .player-name{color:var(--accent)}
 .player-row.hl.fem-hl{background:rgba(255,107,157,0.06)}
 .player-row.hl.fem-hl .player-name{color:var(--fem)}
@@ -653,6 +654,21 @@ function buildData(rows){
 }
 
 // ── RENDER RANKING ──
+function detectarSubstituidos(players) {
+  // Soma dos pontos do confronto
+  var comPontos = players.filter(function(p){ return p.jogo4 > 0; });
+  if (comPontos.length === 0) return {};
+  var soma = comPontos.reduce(function(a,p){ return a+p.jogo4; }, 0);
+  if (soma >= 270) return {}; // todos participaram
+  // Menor pontuação = substituído(s)
+  var menorPts = Math.min.apply(null, comPontos.map(function(p){ return p.jogo4; }));
+  var subs = {};
+  comPontos.forEach(function(p){
+    if (p.jogo4 === menorPts) subs[p.slot] = true;
+  });
+  return subs;
+}
+
 function renderR4(groups,cat,filter){
   loadDispStatus();
   var panel=document.getElementById("panel-"+cat);
@@ -699,12 +715,15 @@ function renderR4(groups,cat,filter){
     html+='<div class="col-headers"><div class="col-h"></div><div class="col-h">Jogador</div><div class="col-h right">Rodada</div><div class="col-h right">Soma</div></div>';
     var ranked=g.players.slice().sort(function(a,b){return b.jogo4!==a.jogo4?b.jogo4-a.jogo4:b.soma-a.soma;});
     var rankMap={};for(var r=0;r<ranked.length;r++)rankMap[ranked[r].slot]=r;
+    var subsMap=detectarSubstituidos(g.players);
     for(var j=0;j<g.players.length;j++){
       var p=g.players[j],match=q&&(p.name.toLowerCase().indexOf(q)>=0);
       var empty=!p.name||p.name.toUpperCase()==="ABERTO";
       var crowns="";for(var c=0;c<p.crowns;c++)crowns+=crown();
       var displayName=empty?"Vaga aberta":esc(p.name)+crowns;
-      var j4=p.jogo4>0?'<div class="jogo-cell has-value">'+p.jogo4+"</div>":'<div class="jogo-cell">-</div>';
+      var isSub = subsMap[p.slot] === true;
+      var subBadge = isSub ? '<span class="sub-badge" title="Substituído nesta rodada">S</span>' : '';
+      var j4=p.jogo4>0?'<div class="jogo-cell has-value" style="display:flex;align-items:center;justify-content:flex-end;gap:3px">'+subBadge+p.jogo4+"</div>":'<div class="jogo-cell">-</div>';
       var sm=p.soma>0?'<div class="soma-cell'+(isFem?" fem":"")+'">'+p.soma+"</div>":'<div class="soma-cell empty">-</div>';
       var rowCls="player-row"+(match?" hl"+(isFem?" fem-hl":""):"");
       var nameCls="player-name"+(empty?" empty":"");
