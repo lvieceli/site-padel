@@ -815,7 +815,8 @@ async function openAgenda(info){
   for(var i=0;i<groups.length;i++){if(groups[i].confrontoNum===num){group=groups[i];break;}}
   if(!group)return;
   var players=group.players.filter(function(p){return p.name&&p.name.toUpperCase()!=="ABERTO";});
-  var saved=await sGet(key)||{};
+  // Carrega do cache (já vem do servidor via doGet)
+  var saved = (DISP_CACHE[key]) ? JSON.parse(JSON.stringify(DISP_CACHE[key])) : {};
   var dataIni=CFG.dataInicio?new Date(CFG.dataInicio):new Date();
   var dataFim=CFG.dataFim?new Date(CFG.dataFim):(function(){var f=new Date(dataIni);f.setDate(f.getDate()+13);return f;})();
   AG={key:key,num:num,cat:cat,players:players,selIdx:-1,dataIni:dataIni,dataFim:dataFim,disps:saved};
@@ -1030,26 +1031,100 @@ function renderCruz(){
 
 // ── COMPUTE NEXT ROUND ──
 function computeNextRound(groups){
-  var n=groups.length;if(n===0)return groups;
-  var woMap={};
-  groups.forEach(function(g,idx){var am=AGENDA["masc_"+g.confrontoNum],af=AGENDA["fem_"+g.confrontoNum],ag=am||af||null;if(ag&&ag.wo===true)woMap[idx]=true;});
-  function rp(pl){var h=pl.some(function(p){return p.jogo4>0;});if(!h)return null;return pl.slice().sort(function(a,b){return b.jogo4!==a.jogo4?b.jogo4-a.jogo4:b.soma-a.soma;});}
-  var ranked=groups.map(function(g){return rp(g.players);});
-  var result=groups.map(function(){return[{slot:1,name:"",crowns:0,jogo5:0,soma:0},{slot:2,name:"",crowns:0,jogo5:0,soma:0},{slot:3,name:"",crowns:0,jogo5:0,soma:0},{slot:4,name:"",crowns:0,jogo5:0,soma:0}];});
-  function s2(a,b){if(!a||!b)return[a,b];return(b.jogo4!==a.jogo4)?(b.jogo4>a.jogo4?[b,a]:[a,b]):(b.soma>a.soma?[b,a]:[a,b]);}
-  function ms(p){if(!p)return{slot:0,name:"",crowns:0,jogo5:0,soma:0};return{slot:0,name:p.name,crowns:p.crowns,jogo5:0,soma:p.soma};}
-  for(var i=0;i<n;i++){
-    if(woMap[i]){var dest=(i===n-1)?i:i+1;var jw=groups[i].players;for(var w=0;w<jw.length;w++){result[dest][w]=ms(jw[w]);result[dest][w].slot=w+1;}continue;}
-    var r=ranked[i];if(!r)continue;
-    var le=n-1;while(le>0&&woMap[le])le--;
-    var iF=(i===0),iS=(i===1&&n>2),iL=(i===le),iP=(i===le-1);
-    if(iF){var tp=s2(r[0],r[1]);result[0][0]=ms(tp[0]);result[0][0].slot=1;result[0][1]=ms(tp[1]);result[0][1].slot=2;if(n>1){var dn=s2(r[2],r[3]);result[1][0]=ms(dn[0]);result[1][0].slot=1;result[1][1]=ms(dn[1]);result[1][1].slot=2;}}
-    else if(iS){var u2=s2(r[0],r[1]);result[0][2]=ms(u2[0]);result[0][2].slot=3;result[0][3]=ms(u2[1]);result[0][3].slot=4;result[1][2]=ms(r[2]);result[1][2].slot=3;if(!woMap[i+1]){result[2][0]=ms(r[3]);result[2][0].slot=1;}}
-    else if(iL){var ul=s2(r[0],r[1]);result[i-1][2]=ms(ul[0]);result[i-1][2].slot=3;result[i-1][3]=ms(ul[1]);result[i-1][3].slot=4;var sl=s2(r[2],r[3]);result[i][2]=ms(sl[0]);result[i][2].slot=3;result[i][3]=ms(sl[1]);result[i][3].slot=4;}
-    else if(iP){result[i-1][3]=ms(r[0]);result[i-1][3].slot=4;result[i][1]=ms(r[1]);result[i][1].slot=2;var dp=s2(r[2],r[3]);var ni=i+1;while(ni<n&&woMap[ni])ni++;if(ni<n){result[ni][0]=ms(dp[0]);result[ni][0].slot=1;result[ni][1]=ms(dp[1]);result[ni][1].slot=2;}else{result[i][2]=ms(dp[0]);result[i][2].slot=3;result[i][3]=ms(dp[1]);result[i][3].slot=4;}}
-    else{result[i-1][3]=ms(r[0]);result[i-1][3].slot=4;result[i][1]=ms(r[1]);result[i][1].slot=2;result[i][2]=ms(r[2]);result[i][2].slot=3;var ni2=i+1;while(ni2<n&&woMap[ni2])ni2++;if(ni2<n){result[ni2][0]=ms(r[3]);result[ni2][0].slot=1;}}
+  var n=groups.length; if(n===0)return groups;
+
+  // Identifica WOs
+  var woSet={};
+  groups.forEach(function(g,idx){
+    var am=AGENDA['masc_'+g.confrontoNum],af=AGENDA['fem_'+g.confrontoNum];
+    var ag=am||af||null;
+    if(ag&&ag.wo===true) woSet[idx]=true;
+  });
+
+  function rp(pl){
+    var h=pl.some(function(p){return p.jogo4>0;});
+    if(!h)return null;
+    return pl.slice().sort(function(a,b){return b.jogo4!==a.jogo4?b.jogo4-a.jogo4:b.soma-a.soma;});
   }
-  return groups.map(function(g,i){return{confronto:g.confronto,confrontoNum:g.confrontoNum,players:result[i].slice().sort(function(a,b){return a.slot-b.slot;})};});
+  var ranked=groups.map(function(g){return rp(g.players);});
+
+  var result=groups.map(function(){
+    return[{slot:1,name:'',crowns:0,jogo5:0,soma:0},
+           {slot:2,name:'',crowns:0,jogo5:0,soma:0},
+           {slot:3,name:'',crowns:0,jogo5:0,soma:0},
+           {slot:4,name:'',crowns:0,jogo5:0,soma:0}];
+  });
+
+  function s2(a,b){if(!a||!b)return[a,b];return(b.jogo4!==a.jogo4)?(b.jogo4>a.jogo4?[b,a]:[a,b]):(b.soma>a.soma?[b,a]:[a,b]);}
+  function ms(p){if(!p)return{slot:0,name:'',crowns:0,jogo5:0,soma:0};return{slot:0,name:p.name,crowns:p.crowns,jogo5:0,soma:p.soma};}
+
+  // Lista de confrontos SEM WO (índices originais)
+  var semWO=[];
+  for(var i=0;i<n;i++){ if(!woSet[i]) semWO.push(i); }
+  var nSem=semWO.length;
+
+  // Calcula resultado para confrontos sem WO
+  var resultSemWO=[];
+  for(var i=0;i<nSem;i++){
+    resultSemWO.push([{slot:1,name:'',crowns:0,jogo5:0,soma:0},{slot:2,name:'',crowns:0,jogo5:0,soma:0},
+                      {slot:3,name:'',crowns:0,jogo5:0,soma:0},{slot:4,name:'',crowns:0,jogo5:0,soma:0}]);
+  }
+
+  var rankedSem=semWO.map(function(idx){return ranked[idx];});
+
+  for(var vi=0;vi<nSem;vi++){
+    var r=rankedSem[vi]; if(!r)continue;
+    var iF=(vi===0),iS=(vi===1&&nSem>2),iL=(vi===nSem-1),iP=(vi===nSem-2);
+    if(iF){
+      var tp=s2(r[0],r[1]);resultSemWO[0][0]=ms(tp[0]);resultSemWO[0][0].slot=1;resultSemWO[0][1]=ms(tp[1]);resultSemWO[0][1].slot=2;
+      if(nSem>1){var dn=s2(r[2],r[3]);resultSemWO[1][0]=ms(dn[0]);resultSemWO[1][0].slot=1;resultSemWO[1][1]=ms(dn[1]);resultSemWO[1][1].slot=2;}
+    } else if(iS){
+      var u2=s2(r[0],r[1]);resultSemWO[0][2]=ms(u2[0]);resultSemWO[0][2].slot=3;resultSemWO[0][3]=ms(u2[1]);resultSemWO[0][3].slot=4;
+      resultSemWO[1][2]=ms(r[2]);resultSemWO[1][2].slot=3;
+      if(nSem>2){resultSemWO[2][0]=ms(r[3]);resultSemWO[2][0].slot=1;}
+    } else if(iL){
+      var ul=s2(r[0],r[1]);resultSemWO[vi-1][2]=ms(ul[0]);resultSemWO[vi-1][2].slot=3;resultSemWO[vi-1][3]=ms(ul[1]);resultSemWO[vi-1][3].slot=4;
+      var sl=s2(r[2],r[3]);resultSemWO[vi][2]=ms(sl[0]);resultSemWO[vi][2].slot=3;resultSemWO[vi][3]=ms(sl[1]);resultSemWO[vi][3].slot=4;
+    } else if(iP){
+      resultSemWO[vi-1][3]=ms(r[0]);resultSemWO[vi-1][3].slot=4;resultSemWO[vi][1]=ms(r[1]);resultSemWO[vi][1].slot=2;
+      var dp=s2(r[2],r[3]);
+      if(vi+1<nSem){resultSemWO[vi+1][0]=ms(dp[0]);resultSemWO[vi+1][0].slot=1;resultSemWO[vi+1][1]=ms(dp[1]);resultSemWO[vi+1][1].slot=2;}
+    } else {
+      resultSemWO[vi-1][3]=ms(r[0]);resultSemWO[vi-1][3].slot=4;resultSemWO[vi][1]=ms(r[1]);resultSemWO[vi][1].slot=2;
+      resultSemWO[vi][2]=ms(r[2]);resultSemWO[vi][2].slot=3;
+      if(vi+1<nSem){resultSemWO[vi+1][0]=ms(r[3]);resultSemWO[vi+1][0].slot=1;}
+    }
+  }
+
+  // Mapeia resultado: confrontos sem WO sobem em cascata para preencher vazio
+  var cursor=0;
+  var woJogs=[];
+  for(var i=0;i<n;i++){
+    if(woSet[i]){
+      // WO: jogadores vão para o confronto logo abaixo
+      var destWO=(i<n-1)?i+1:i;
+      woJogs.push({destino:destWO,players:groups[i].players});
+    } else {
+      var vi2=semWO.indexOf(i);
+      if(vi2>=0) result[cursor]=resultSemWO[vi2];
+      cursor++;
+    }
+  }
+
+  // Aplica jogadores do WO no confronto destino (slots 1,2,3,4 completo)
+  woJogs.forEach(function(wo){
+    var d=wo.destino;
+    if(d<n){
+      wo.players.forEach(function(p,w){
+        result[d][w]=ms(p);result[d][w].slot=w+1;
+      });
+    }
+  });
+
+  return groups.map(function(g,i){
+    return{confronto:g.confronto,confrontoNum:g.confrontoNum,
+           players:result[i].slice().sort(function(a,b){return a.slot-b.slot;})};
+  });
 }
 
 // ── VIEWS ──
@@ -1117,6 +1192,7 @@ function processData(payload){
     if(data.masc.length===0&&data.fem.length===0)throw new Error("Sem dados");
     DATA=data;
     STATS = payload.stats || {};
+    if(payload.disponibilidades) loadDispFromPayload(payload.disponibilidades);
     applyConfig(cfg);buildHistButtons(HISTORICO);
     renderDestaques();
     renderR4(DATA.masc,"masc","");renderR4(DATA.fem,"fem","");
@@ -1182,9 +1258,7 @@ function loadDispStatus() {
   allGroups.forEach(function(g) {
     var isFem = DATA.fem.indexOf(g) >= 0;
     var agKey = (isFem?'fem':'masc') + '_' + g.confrontoNum;
-    var saved = null;
-    try { saved = localStorage.getItem('ag_'+agKey); } catch(e){}
-    var disps = saved ? JSON.parse(saved) : {};
+    var disps = DISP_CACHE[agKey] || {};
     var players = g.players.filter(function(p){ return p.name && p.name.toUpperCase()!=='ABERTO'; });
     var initials = getInitials2(players);
     DISP_STATUS[agKey] = players.map(function(p, idx) {
