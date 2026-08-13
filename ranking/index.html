@@ -615,200 +615,48 @@ var MESES=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","De
 // Estado do agendamento
 var AG={key:"",num:0,cat:"",players:[],selIdx:-1,dataIni:null,dataFim:null,disps:{}};
 
-// ── STORAGE (localStorage) ──
-async function sGet(k){try{var r=localStorage.getItem("ag_"+k);return r?JSON.parse(r):null;}catch(e){return null;}}
-async function sSet(k,v){try{localStorage.setItem("ag_"+k,JSON.stringify(v));return true;}catch(e){return false;}}
+// ── STORAGE COMPARTILHADO (Google Sheets) ──
+var DISP_CACHE = {};
 
-// ── UTILS ──
-function parseCSV(t){var rows=t.split("\n"),res=[];for(var i=0;i<rows.length;i++){var ln=rows[i],cells=[],inQ=false,cell="";for(var j=0;j<ln.length;j++){var ch=ln[j];if(ch==='"'){inQ=!inQ;}else if(ch===","&&!inQ){cells.push(cell.trim());cell="";}else{cell+=ch;}}cells.push(cell.trim());if(cells.some(function(c){return c!=="";})){ res.push(cells);}}return res;}
-function cleanName(n){return(n||"").replace(/\u{1F451}/gu,"").trim();}
-function countCrowns(n){var m=(n||"").match(/\u{1F451}/gu);return m?m.length:0;}
-function esc(s){return(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
-function crown(){return'<span style="font-size:.75rem">&#128081;</span>';}
-function dk(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);}
-function fmtD(d){return DIAS[d.getDay()]+", "+d.getDate()+" "+MESES[d.getMonth()];}
-function isFds(d){return d.getDay()===0||d.getDay()===6;}
-function periodos(d){return isFds(d)?["Manhã","Tarde"]:["Manhã","Tarde","Noite"];}
-function getDatas(){
-  var ini=AG.dataIni||new Date(),fim=AG.dataFim||(function(){var f=new Date(ini);f.setDate(f.getDate()+13);return f;})();
-  var arr=[],d=new Date(ini);d.setHours(0,0,0,0);var fe=new Date(fim);fe.setHours(23,59,0,0);
-  while(d<=fe){arr.push(new Date(d));d.setDate(d.getDate()+1);}return arr;
+function loadDispFromPayload(disponibilidades) {
+  if (disponibilidades) DISP_CACHE = disponibilidades;
 }
 
-// ── BUILD DATA ──
-function buildData(rows){
-  var bm={},bf={},nm={},nf={};
-  for(var i=1;i<rows.length;i++){
-    var r=rows[i];if(r.length<4)continue;
-    var cat=(r[0]||"").trim().toLowerCase(),cnum=parseInt(r[1]),slot=parseInt(r[2]);
-    var nR4=(r[3]||"").trim(),rod4=parseFloat(r[4])||0,soma=parseFloat(r[5])||0;
-    var nR5=(r[6]||"").trim(),rod5=parseFloat(r[7])||0;
-    if(!cat||isNaN(cnum)||isNaN(slot))continue;
-    var bR4=(cat==="fem")?bf:bm;if(!bR4[cnum])bR4[cnum]=[];
-    bR4[cnum].push({slot:slot,name:cleanName(nR4),crowns:countCrowns(nR4),jogo4:rod4,soma:soma});
-    var bR5=(cat==="fem")?nf:nm;if(!bR5[cnum])bR5[cnum]=[];
-    bR5[cnum].push({slot:slot,name:cleanName(nR5),crowns:countCrowns(nR5),jogo5:rod5,soma:soma});
+async function sGet(k) {
+  return DISP_CACHE[k] || null;
+}
+
+async function sSet(k, disps) {
+  try {
+    var jogadores = Object.keys(disps);
+    var ok = true;
+    for (var ni = 0; ni < jogadores.length; ni++) {
+      var nomeJogador = jogadores[ni];
+      var resp = await fetch(APPS_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          confrontoKey: k,
+          nomeJogador: nomeJogador,
+          disponibilidades: disps[nomeJogador]
+        }),
+        headers: {'Content-Type': 'application/json'}
+      });
+      var result = await resp.json();
+      if (!result.success) ok = false;
+    }
+    // Atualiza cache local
+    if (!DISP_CACHE[k]) DISP_CACHE[k] = {};
+    jogadores.forEach(function(nome) {
+      DISP_CACHE[k][nome] = disps[nome];
+    });
+    return ok;
+  } catch(e) {
+    console.error('Erro ao salvar:', e);
+    return false;
   }
-  function toArr(b,f){var lbl=f?"Fem.":"Masc.";return Object.keys(b).sort(function(a,c){return+a-+c;}).map(function(k){return{confronto:"Confronto "+k+" "+lbl,confrontoNum:+k,players:b[k].sort(function(a,c){return a.slot-c.slot;})};});}
-  return{masc:toArr(bm,false),fem:toArr(bf,true),next_masc:toArr(nm,false),next_fem:toArr(nf,true)};
 }
 
-// ── RENDER RANKING ──
-function detectarSubstituidos(players) {
-  // Soma dos pontos do confronto
-  var comPontos = players.filter(function(p){ return p.jogo4 > 0; });
-  if (comPontos.length === 0) return {};
-  var soma = comPontos.reduce(function(a,p){ return a+p.jogo4; }, 0);
-  if (soma >= 270) return {}; // todos participaram
-  // Menor pontuação = substituído(s)
-  var menorPts = Math.min.apply(null, comPontos.map(function(p){ return p.jogo4; }));
-  var subs = {};
-  comPontos.forEach(function(p){
-    if (p.jogo4 === menorPts) subs[p.slot] = true;
-  });
-  return subs;
-}
 
-function renderR4(groups,cat,filter){
-  loadDispStatus();
-  var panel=document.getElementById("panel-"+cat);
-  var isFem=(cat==="fem"),q=(filter||"").toLowerCase(),html="";
-  for(var i=0;i<groups.length;i++){
-    var g=groups[i],ok=false;
-    if(q){for(var j=0;j<g.players.length;j++){if(g.players[j].name.toLowerCase().indexOf(q)>=0){ok=true;break;}}}else ok=true;
-    if(!ok)continue;
-    var agKey=(isFem?"fem":"masc")+"_"+g.confrontoNum;
-    var ag=AGENDA[agKey]||null,isWO=ag&&ag.wo===true;
-    var hasResult=g.players.some(function(p){return p.jogo4>0;});
-    var agInfo="";
-    if(ag&&(ag.dia||ag.hora||ag.quadra))agInfo=(ag.dia||"")+(ag.hora?" · "+ag.hora:"")+(ag.quadra?" · Quadra "+ag.quadra:"");
-    var dotClass=hasResult?"verde":(agInfo?"amarelo":"cinza");
-    var statusLabel=dotClass==="verde"?"CONCLUIDO":(dotClass==="amarelo"?"AGENDADO":"NAO AGENDADO");
-    var btnInfo=JSON.stringify({key:agKey,num:g.confrontoNum,cat:cat});
-    html+='<div class="confronto-block'+(isWO?" wo-atual":"")+"\">";
-    html+='<div class="confronto-header">';
-    html+='<span class="confronto-title '+cat+'">'+esc(g.confronto)+"</span>";
-    if(isWO)html+='<span class="wo-badge">WO</span>';
-    else if(agInfo)html+='<span class="agenda-info">'+agInfo+"</span>";
-    html+='<span class="agenda-status"><span class="agenda-dot '+dotClass+'"></span><span class="agenda-label '+dotClass+'">'+statusLabel+"</span></span>";
-    // Bolinhas + botão num único bloco compacto
-    var dotStatus=DISP_STATUS[agKey]||[];
-    {
-      html+='<div class="disp-group">';
-      html+='<button class="btn-agendar" style="border:none" onclick=\'openAgenda('+btnInfo.replace(/'/g,"&#39;")+")'>\uD83D\uDCC5 Disponibilidade</button>";
-      if(dotStatus.length>0){
-        html+='<div class="player-dots">';
-        dotStatus.forEach(function(ps){
-            var color=PLAYER_COLORS[ps.idx]||'#555';
-            var initial=ps.initial||(ps.name.charAt(0));
-            if(ps.done){
-              html+='<div class="player-dot done" style="border-color:'+color+';color:'+color+'" title="'+esc(ps.name)+' - Respondeu">'+initial+'</div>';
-            } else {
-              html+='<div class="player-dot pending" title="'+esc(ps.name)+' - Pendente">'+initial+'</div>';
-            }
-        });
-        html+='</div>';
-    }
-    }
-    html+='</div>';
-    html+="</div>";
-    html+='<div class="col-headers"><div class="col-h"></div><div class="col-h">Jogador</div><div class="col-h right">Rodada</div><div class="col-h right">Soma</div></div>';
-    var ranked=g.players.slice().sort(function(a,b){return b.jogo4!==a.jogo4?b.jogo4-a.jogo4:b.soma-a.soma;});
-    var rankMap={};for(var r=0;r<ranked.length;r++)rankMap[ranked[r].slot]=r;
-    var subsMap=detectarSubstituidos(g.players);
-    for(var j=0;j<g.players.length;j++){
-      var p=g.players[j],match=q&&(p.name.toLowerCase().indexOf(q)>=0);
-      var empty=!p.name||p.name.toUpperCase()==="ABERTO";
-      var crowns="";for(var c=0;c<p.crowns;c++)crowns+=crown();
-      var displayName=empty?"Vaga aberta":esc(p.name)+crowns;
-      var isSub = subsMap[p.slot] === true;
-      var subBadge = isSub ? '<span class="sub-badge" title="Substituído nesta rodada">S</span>' : '';
-      var j4=p.jogo4>0?'<div class="jogo-cell has-value" style="display:flex;align-items:center;justify-content:flex-end;gap:3px">'+subBadge+p.jogo4+"</div>":'<div class="jogo-cell">-</div>';
-      var sm=p.soma>0?'<div class="soma-cell'+(isFem?" fem":"")+'">'+p.soma+"</div>":'<div class="soma-cell empty">-</div>';
-      var rowCls="player-row"+(match?" hl"+(isFem?" fem-hl":""):"");
-      var nameCls="player-name"+(empty?" empty":"");
-      var slotCls="slot-num";
-      if(p.jogo4>0){
-        var rank=rankMap[p.slot],nG=groups.length,movement;
-        if(i===0)movement=(rank<=1)?"stay":"down";
-        else if(i===1)movement=(rank<=1)?"up":(rank===2?"stay":"down");
-        else if(i===nG-1)movement=(rank<=1)?"up":"stay";
-        else if(i===nG-2)movement=(rank===0)?"up":(rank===1?"stay":"down");
-        else movement=(rank===0)?"up":(rank<=2?"stay":"down");
-        if(movement==="up")slotCls="slot-num slot-1st";
-        else if(movement==="stay")slotCls="slot-num slot-2nd";
-        else slotCls="slot-num slot-4th";
-      }
-      html+='<div class="'+rowCls+'"><div class="'+slotCls+'">'+(((g.confrontoNum-1)*4)+p.slot)+"</div>";
-      var perfilBtn = (!empty && IS_ADMIN) ? '<button class="btn-perfil" data-nome="'+esc(p.name)+'" onclick="event.stopPropagation();openPerfil(this.dataset.nome)">&#128202;</button>' : '';
-      html+='<div class="'+nameCls+'" style="display:flex;align-items:center;gap:.3rem">'+displayName+perfilBtn+"</div>"+j4+sm+"</div>";
-    }
-    html+="</div>";
-  }
-  panel.innerHTML=html||'<p style="color:var(--muted);text-align:center;padding:2rem">Nenhum resultado.</p>';
-}
-
-function renderR5(groups,panelId){
-  var panel=document.getElementById(panelId),isFem=panelId.indexOf("fem")>=0;
-  var titleCls=isFem?"next-fem":"next-masc",html="";
-  for(var i=0;i<groups.length;i++){
-    var g=groups[i];
-    html+='<div class="confronto-block next-block"><div class="confronto-header"><span class="confronto-title '+titleCls+'">'+esc(g.confronto)+"</span></div>";
-    html+='<div class="col-headers"><div class="col-h"></div><div class="col-h">Jogador</div><div class="col-h right">'+(window._cfgProxima||"Proxima")+'</div><div class="col-h right">Soma</div></div>';
-    for(var j=0;j<g.players.length;j++){
-      var p=g.players[j],empty=!p.name;
-      var crowns="";for(var c=0;c<(p.crowns||0);c++)crowns+=crown();
-      var displayName=empty?"A definir...":esc(p.name)+crowns;
-      var j5=p.jogo5>0?'<div class="jogo-cell has-value">'+p.jogo5+"</div>":'<div class="jogo-cell">-</div>';
-      var sv=(p.soma>0&&!empty)?'<div class="soma-cell'+(isFem?" fem":"")+'">'+p.soma+"</div>":'<div class="soma-cell empty">-</div>';
-      var nc="player-name"+(empty?" pending":"");
-      html+='<div class="player-row"><div class="slot-num next-slot">'+((g.confrontoNum-1)*4+p.slot)+"</div><div class=\""+nc+'">'+displayName+"</div>"+j5+sv+"</div>";
-    }
-    html+="</div>";
-  }
-  panel.innerHTML=html||'<p style="color:var(--muted);text-align:center;padding:2rem">Formacao ainda nao definida.</p>';
-}
-
-function renderHist(histKey,cat){
-  var panel=document.getElementById("panel-hist-"+cat),isFem=(cat==="fem");
-  var titleCls=isFem?"hist-fem":"hist-masc",hd=HISTORICO[histKey];
-  if(!hd){panel.innerHTML='<p style="color:var(--muted);text-align:center;padding:2rem">Dados não encontrados.</p>';return;}
-  var groups=isFem?hd.fem:hd.masc;
-  if(!groups||groups.length===0){panel.innerHTML='<p style="color:var(--muted);text-align:center;padding:2rem">Nenhum dado.</p>';return;}
-  var jogoLabel=histKey.replace("2026 ",""),html="";
-  for(var i=0;i<groups.length;i++){
-    var g=groups[i],isWO=g.wo===true;
-    html+='<div class="confronto-block hist-block'+(isWO?" wo-block":"")+'"><div class="confronto-header">';
-    html+='<span class="confronto-title '+titleCls+'">'+esc(g.confronto)+"</span>";
-    if(isWO)html+='<span class="wo-badge">WO</span>';
-    else if(g.dia||g.hora||g.quadra){var ai=(g.dia||"")+(g.hora?" · "+g.hora:"")+(g.quadra?" · Quadra "+g.quadra:"");html+='<span class="hist-agenda-info">'+esc(ai)+"</span>";}
-    html+="</div>";
-    html+='<div class="col-headers"><div class="col-h"></div><div class="col-h">Jogador</div><div class="col-h right">'+esc(jogoLabel)+'</div><div class="col-h right">Soma</div></div>';
-    var hasR=g.players.some(function(p){return p.jogo>0;}),rankMap={};
-    if(hasR&&!isWO){var rk=g.players.slice().sort(function(a,b){return b.jogo!==a.jogo?b.jogo-a.jogo:b.soma-a.soma;});for(var r=0;r<rk.length;r++)rankMap[rk[r].slot]=r;}
-    for(var j=0;j<g.players.length;j++){
-      var p=g.players[j],empty=!p.nome;
-      var dn=empty?"Vaga aberta":esc(p.nome);
-      var jv=p.jogo>0?'<div class="jogo-cell hist-value">'+p.jogo+"</div>":'<div class="jogo-cell">-</div>';
-      var sv=p.soma>0?'<div class="soma-cell'+(isFem?" fem":"")+'">'+p.soma+"</div>":'<div class="soma-cell empty">-</div>';
-      var nc="player-name"+(empty?" empty":""),sc="slot-num hist-slot";
-      if(!isWO&&hasR&&!empty){
-        var rank=rankMap[p.slot],nG=groups.length,mv;
-        if(i===0)mv=(rank<=1)?"stay":"down";
-        else if(i===1)mv=(rank<=1)?"up":(rank===2?"stay":"down");
-        else if(i===nG-1)mv=(rank<=1)?"up":"stay";
-        else if(i===nG-2)mv=(rank===0)?"up":(rank===1?"stay":"down");
-        else mv=(rank===0)?"up":(rank<=2?"stay":"down");
-        if(mv==="up")sc="slot-num slot-1st";else if(mv==="stay")sc="slot-num slot-2nd";else sc="slot-num slot-4th";
-      }
-      html+='<div class="player-row"><div class="'+sc+'">'+(((g.numero-1)*4)+p.slot)+"</div><div class=\""+nc+'">'+dn+"</div>"+jv+sv+"</div>";
-    }
-    html+="</div>";
-  }
-  panel.innerHTML=html||'<p style="color:var(--muted);text-align:center;padding:2rem">Nenhum dado.</p>';
-}
-
-// ── SISTEMA DE DISPONIBILIDADE ──
 async function openAgenda(info){
   var key=info.key,num=info.num,cat=info.cat;
   var groups=(cat==="fem")?DATA.fem:DATA.masc,group=null;
