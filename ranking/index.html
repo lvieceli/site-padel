@@ -622,22 +622,42 @@ function loadDispFromPayload(d) { if (d) DISP_CACHE = d; }
 
 async function sGet(k) { return DISP_CACHE[k] || null; }
 
+function jsonpCall(url) {
+  return new Promise(function(resolve, reject) {
+    var cbName = '_jcb' + Date.now();
+    var script = document.createElement('script');
+    window[cbName] = function(data) {
+      delete window[cbName];
+      document.head.removeChild(script);
+      resolve(data);
+    };
+    script.onerror = function() { reject(new Error('JSONP error')); };
+    script.src = url + '&callback=' + cbName;
+    document.head.appendChild(script);
+    setTimeout(function(){ reject(new Error('timeout')); }, 10000);
+  });
+}
+
 async function sSet(k, disps) {
   try {
     var nomes = Object.keys(disps);
     for (var ni = 0; ni < nomes.length; ni++) {
-      var resp = await fetch(APPS_URL, {
-        method: 'POST',
-        body: JSON.stringify({confrontoKey:k, nomeJogador:nomes[ni], disponibilidades:disps[nomes[ni]]}),
-        headers: {'Content-Type':'application/json'}
-      });
-      var res = await resp.json();
+      var nome = nomes[ni];
+      var dispStr = encodeURIComponent(JSON.stringify(disps[nome]));
+      var url = APPS_URL + '?action=salvarDisp'
+        + '&confrontoKey=' + encodeURIComponent(k)
+        + '&nomeJogador='  + encodeURIComponent(nome)
+        + '&disponibilidades=' + dispStr;
+      var res = await jsonpCall(url);
       if (!res.success) return false;
     }
     if (!DISP_CACHE[k]) DISP_CACHE[k] = {};
     nomes.forEach(function(n){ DISP_CACHE[k][n] = disps[n]; });
     return true;
-  } catch(e) { return false; }
+  } catch(e) {
+    console.error('Erro ao salvar:', e);
+    return false;
+  }
 }
 
 // ── UTILS ──
