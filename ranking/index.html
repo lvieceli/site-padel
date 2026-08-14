@@ -540,21 +540,41 @@ function loadDispFromPayload(d) { if (d) DISP_CACHE = d; }
 async function sGet(k) { return DISP_CACHE[k] || null; }
 
 async function sSet(k, disps) {
-  try {
-    var nomes = Object.keys(disps);
-    for (var ni = 0; ni < nomes.length; ni++) {
-      var resp = await fetch(APPS_URL, {
-        method: 'POST',
-        body: JSON.stringify({confrontoKey:k, nomeJogador:nomes[ni], disponibilidades:disps[nomes[ni]]}),
-        headers: {'Content-Type':'application/json'}
-      });
-      var res = await resp.json();
-      if (!res.success) return false;
-    }
-    if (!DISP_CACHE[k]) DISP_CACHE[k] = {};
-    nomes.forEach(function(n){ DISP_CACHE[k][n] = disps[n]; });
-    return true;
-  } catch(e) { return false; }
+  var nomes = Object.keys(disps);
+  for (var ni = 0; ni < nomes.length; ni++) {
+    var nome = nomes[ni];
+    var dispJson = encodeURIComponent(JSON.stringify(disps[nome]));
+    var url = APPS_URL
+      + '?action=salvarDisp'
+      + '&confrontoKey=' + encodeURIComponent(k)
+      + '&nomeJogador=' + encodeURIComponent(nome)
+      + '&disponibilidades=' + dispJson
+      + '&callback=_cbDisp'
+      + '&t=' + Date.now();
+
+    var ok = await new Promise(function(resolve) {
+      var script = document.createElement('script');
+      window._cbDisp = function(res) {
+        if (script.parentNode) script.parentNode.removeChild(script);
+        resolve(res && res.success === true);
+      };
+      script.onerror = function() {
+        if (script.parentNode) script.parentNode.removeChild(script);
+        resolve(false);
+      };
+      setTimeout(function() {
+        if (script.parentNode) script.parentNode.removeChild(script);
+        resolve(false);
+      }, 10000);
+      script.src = url;
+      document.head.appendChild(script);
+    });
+
+    if (!ok) return false;
+  }
+  if (!DISP_CACHE[k]) DISP_CACHE[k] = {};
+  nomes.forEach(function(n){ DISP_CACHE[k][n] = disps[n]; });
+  return true;
 }
 
 function parseCSV(t){var rows=t.split("\n"),res=[];for(var i=0;i<rows.length;i++){var ln=rows[i],cells=[],inQ=false,cell="";for(var j=0;j<ln.length;j++){var ch=ln[j];if(ch==='"'){inQ=!inQ;}else if(ch===","&&!inQ){cells.push(cell.trim());cell="";}else{cell+=ch;}}cells.push(cell.trim());if(cells.some(function(c){return c!=="";})){ res.push(cells);}}return res;}
